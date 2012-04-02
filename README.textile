@@ -1,0 +1,27 @@
+h1. Unity3d - Simple Finite State Machine (C#)
+
+State machines are a very effective way to manage game state, either on your main game play object (Game Over, Restart, Continue etc) or on individual actors and NPCs (AI behaviours, Animations, etc). The following is a simple state machine that should work well within a unity context. 
+
+h2. Designed with simplicity in mind
+
+After looking at all the other state implementations out there, I wasn't quite comfortable with any of them. So I decided to create my own to facilitate the following:
+
+* States should be easy to update, and therefore modifiable in the inspector.
+* You should be able to target states changes using an enum, without the need for messy state tables. 
+* The states should be able to handle asynchrounous events, and therefore allow you to repsond to event listeners. 
+* Should be easy to create new states. (This is remains questionable, mostly becuase monodevelop doesn't allow you to define custom templates)
+
+h2. How to implement
+
+Its probably easiest to refer to the example project included (Unity 3.5), as it shows off different flavours of state manipulation using states. 
+
+Note that in order for you state implementations to show up in the inspector, you need to add the <code>[System.Serializable]</code> attribute to your state classes. 
+
+h3. Notes
+
+This State Machine implmentation was inspired by the state machine by Lius Anton found here:
+http://www.playmedusa.com/blog/2010/12/10/a-finite-state-machine-in-c-for-unity3d/
+
+For feedback and suggestions:
+http://www.thefuntastic.com/2012/04/simple-finite-state-machine/
+http://www.twitter.com/thefuntastic
