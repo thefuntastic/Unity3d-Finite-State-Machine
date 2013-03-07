@@ -1,3 +1,14 @@
+h1. Update
+
+I recommend anyone looking at this project to instead use the statemachine framework found in the following tutorial:
+
+From http://unitygems.com/ :
+"State Machines Part 1":http://unitygems.com/fsm1/
+"State Machines Part 2":http://unitygems.com/fsm2/
+"State Machines Part 3":http://unitygems.com/finite-state-machines-3-final-state-machine-framework/ (final download available here)
+
+It nails all my design considerations in a far more elegant manner by using advanced C# techniques I wasn't aware of. In addition there are several extra features that make it really powerful, so much so I'm using it now for all my state machine needs. 
+
 h1. Unity3d - Simple Finite State Machine (C#)
 
 State machines are a very effective way to manage game state, either on your main game play object (Game Over, Restart, Continue etc) or on individual actors and NPCs (AI behaviours, Animations, etc). The following is a simple state machine that should work well within a unity context. 
