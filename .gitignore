@@ -12,3 +12,4 @@
 /example_project/*.DotSettings
 /example_project/Assets/UnityTestTools
 /example_project/Assets/UnityVS.meta
+/example_project/*.unityproj

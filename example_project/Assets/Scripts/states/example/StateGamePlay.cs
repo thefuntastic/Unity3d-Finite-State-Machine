@@ -23,7 +23,7 @@ public class StateGamePlay : FSMState<Main, Main.States>
 		entity.player.InstaWin += HandleInstaWin;
 		
 		//Example of manipulating state via direct access to the game domain
-		entity.player.ResetHealth();
+		//entity.player.ResetHealth();
 		entity.gui.ShowHealth = true;
 		
 		//Example of manipulating state via proxy call. 

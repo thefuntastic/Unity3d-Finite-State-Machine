@@ -17,23 +17,23 @@ public class Main : MonoBehaviour {
 	public GUIManager gui;
 	
 	//By making these public properties, and using [System.Serializable] in the state classes, these will now appear in the inspector
-	public StateInit stateInit = new StateInit();
-	public StateGamePlay stateGamePlay = new StateGamePlay();
-	public StateGameOverWinner stateGameOverWinner = new StateGameOverWinner();
-	public StateGameOverLoser stateGameOverLoser = new StateGameOverLoser();
+	public StateInit stateInit;
+	public StateGamePlay stateGamePlay;
+	public StateGameOverWinner stateGameOverWinner;
+	public StateGameOverLoser stateGameOverLoser;
 		
 	//The referecne to our state machine
-	private FiniteStateMachine<Main, Main.States> FSM;
+	private FiniteStateMachine<Main, Main.States> fsm;
 	
 
 	void Start () 
 	{
 		//Initialise the state machine
-		FSM = new FiniteStateMachine<Main, Main.States>(this);
-		FSM.RegisterState(stateInit);
-		FSM.RegisterState(stateGamePlay);
-		FSM.RegisterState(stateGameOverWinner);
-		FSM.RegisterState(stateGameOverLoser);
+		fsm = new FiniteStateMachine<Main, Main.States>(this);
+		fsm.RegisterState(stateInit);
+		fsm.RegisterState(stateGamePlay);
+		fsm.RegisterState(stateGameOverWinner);
+		fsm.RegisterState(stateGameOverLoser);
 		
 		//Kick things off
 		ChangeState(stateInit.StateID);
@@ -42,14 +42,14 @@ public class Main : MonoBehaviour {
 	void Update () 
 	{
 		//Must remember to update our state machine
-		FSM.Update();
+		fsm.Update();
 	}
 	
 	//Some examples of utility functions for changing state.
-	//Its up to you to decide how you actually change you state
+	//Its up to you to decide how you actually change your state
 	public void ChangeState(States newState)
 	{
-		FSM.ChangeState(newState);
+		fsm.ChangeState(newState);
 	}
 	
 	public void ChangeState(States newState, float delay)
