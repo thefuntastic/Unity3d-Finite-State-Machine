@@ -20,8 +20,8 @@ namespace MonsterLove.StateMachine
 			stateLookup = new Dictionary<Enum, StateMapping>();
 			for (int i = 0; i < values.Length; i++)
 			{
-				var mapping = new StateMapping();
-				stateLookup.Add((Enum) values.GetValue(i), mapping);
+				var mapping = new StateMapping((Enum) values.GetValue(i));
+				stateLookup.Add(mapping.state, mapping);
 			}
 
 			//Reflect methods
@@ -206,6 +206,11 @@ namespace MonsterLove.StateMachine
 		public Action Update = StateMachineEngine.DoNothing;
 		public Action LateUpdate = StateMachineEngine.DoNothing;
 		public Action FixedUpdate = StateMachineEngine.DoNothing;
+
+		public StateMapping(Enum state)
+		{
+			this.state = state;
+		}
 
 	}
 }

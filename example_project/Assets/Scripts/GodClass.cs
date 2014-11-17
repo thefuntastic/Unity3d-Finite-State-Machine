@@ -13,9 +13,13 @@ public class GodClass : StateMachineBehaviour
 	}
 
 	public float health = 100;
+	public float damage = 20;
+
+	private float startHealth;
 
 	private void Awake()
 	{
+		startHealth = health;
 
 		stateMachine.Initialize<GodClass, States>(this);
 
@@ -24,6 +28,7 @@ public class GodClass : StateMachineBehaviour
 
 	void OnGUI()
 	{
+		//Example of polling states
 		var state = stateMachine.GetState();
 
 		if (state == null) return;
@@ -48,6 +53,8 @@ public class GodClass : StateMachineBehaviour
 	{
 		Debug.Log("Inited");
 
+		health = startHealth;
+
 		yield return new WaitForSeconds(3);
 
 		stateMachine.ChangeState(States.Play);
@@ -66,12 +73,16 @@ public class GodClass : StateMachineBehaviour
 
 	private void Play_Update()
 	{
-		health--;
+		Debug.Log("Health Remaining " + health);
+
+		health -= damage * Time.deltaTime;
 	
 		if(health < 0)
 		{
 			stateMachine.ChangeState(States.Lose);
 		}
+
+		
 	}
 
 	void Play_Exit()
