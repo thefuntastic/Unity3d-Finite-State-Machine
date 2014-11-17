@@ -22,17 +22,35 @@ public class GodClass : StateMachineBehaviour
 		stateMachine.ChangeState(States.Init);
 	}
 
+	void OnGUI()
+	{
+		var state = stateMachine.GetState();
+
+		if (state == null) return;
+
+		if(state.Equals(States.Play))
+		{
+			if(GUILayout.Button("Win"))
+			{
+				stateMachine.ChangeState(States.Win);
+			}
+		}
+		if(state.Equals(States.Win) || state.Equals(States.Lose))
+		{
+			if(GUILayout.Button("Play Again"))
+			{
+				stateMachine.ChangeState(States.Init);
+			}
+		}
+	}
+
 	private IEnumerator Init_Enter()
 	{
 		Debug.Log("Inited");
 
 		yield return new WaitForSeconds(3);
-	}
 
-
-	private void Initted_Update()
-	{
-		
+		stateMachine.ChangeState(States.Play);
 	}
 
 	private void Init_Update()
@@ -40,10 +58,6 @@ public class GodClass : StateMachineBehaviour
 		Debug.Log("init loop");
 	}
 
-	private void Init_Exit()
-	{
-
-	}
 
 	private void Play_Enter()
 	{
@@ -68,5 +82,10 @@ public class GodClass : StateMachineBehaviour
 	void Lose_Enter()
 	{
 		Debug.Log("Lost");
+	}
+
+	void Win_Enter()
+	{
+		Debug.Log("Won");
 	}
 }

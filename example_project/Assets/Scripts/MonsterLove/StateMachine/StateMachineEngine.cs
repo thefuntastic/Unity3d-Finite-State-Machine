@@ -56,12 +56,28 @@ namespace MonsterLove.StateMachine
 
 				switch(names[1])
 				{
-					//case "Enter":
-					//	targetState.Enter = CreateDelegate<T, Action>(methods[i], entity);
-					//	break;
-					//case "Exit":
-					//	targetState.Exit = CreateDelegate<T, Action>(methods[i], entity);
-					//	break;
+					case "Enter":
+						if(methods[i].ReturnType == typeof(IEnumerator))
+						{
+							targetState.Enter = CreateDelegate<T, Func<IEnumerator>>(methods[i], entity);
+						}
+						else
+						{
+							var action = CreateDelegate<T, Action>(methods[i], entity);
+							targetState.Enter = () => { action(); return null; };
+						}
+						break;
+					case "Exit":
+						if(methods[i].ReturnType == typeof(IEnumerator))
+						{
+							targetState.Exit = CreateDelegate<T, Func<IEnumerator>>(methods[i], entity);
+						}
+						else
+						{
+							var action = CreateDelegate<T, Action>(methods[i], entity);
+							targetState.Exit = () => { action(); return null; };
+						}
+						break;
 					case "Update":
 						targetState.Update = CreateDelegate<T, Action> (methods[i], entity);
 						break;
@@ -98,7 +114,36 @@ namespace MonsterLove.StateMachine
 				throw new Exception("No state with the name " + newState.ToString() + " can be found. Please make sure you are called the correct type the statemachine was initialized with");
 			}
 
-			currentState = stateLookup[newState];
+			var nextState = stateLookup[newState];
+
+			if (currentState == nextState) return;
+
+			StartCoroutine(ChangeToNewStateRoutine(nextState));
+		}
+
+		private IEnumerator ChangeToNewStateRoutine(StateMapping newState)
+		{
+			if(currentState != null)
+			{
+				var exitRoutine = currentState.Exit();
+
+				if (exitRoutine != null)
+				{
+					yield return StartCoroutine(exitRoutine);
+				}
+			}
+
+			currentState = newState;
+			
+			if(currentState != null)
+			{
+				var enterRoutine = currentState.Enter();
+
+				if (enterRoutine != null)
+				{
+					yield return StartCoroutine(enterRoutine);
+				}
+			}
 		}
 
 		void FixedUpdate()
@@ -138,16 +183,26 @@ namespace MonsterLove.StateMachine
 		{
 			yield break;
 		}
+
+		public Enum GetState()
+		{
+			if(currentState != null)
+			{
+				return currentState.state;
+			}
+
+			return null;
+		}
 	}
 
 	public class StateMapping
 	{
 		public Enum state;
 
-		//public Func<IEnumerator> Enter = StateMachineEngine.DoNothingCoroutine;
-//		public Func<IEnumerator> Exit = StateMachineEngine.DoNothingCoroutine;
-		public Action Enter = StateMachineEngine.DoNothing;
-		public Action Exit = StateMachineEngine.DoNothing;
+		public Func<IEnumerator> Enter = StateMachineEngine.DoNothingCoroutine;
+		public Func<IEnumerator> Exit = StateMachineEngine.DoNothingCoroutine;
+		//public Action Enter = StateMachineEngine.DoNothing;
+		//public Action Exit = StateMachineEngine.DoNothing;
 		public Action Update = StateMachineEngine.DoNothing;
 		public Action LateUpdate = StateMachineEngine.DoNothing;
 		public Action FixedUpdate = StateMachineEngine.DoNothing;
