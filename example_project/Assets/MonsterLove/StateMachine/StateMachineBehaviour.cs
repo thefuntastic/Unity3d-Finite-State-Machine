@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +9,7 @@ namespace MonsterLove.StateMachine
 	{
 		private StateMachineEngine _stateMachine;
 
+		
 		public StateMachineEngine stateMachine
 		{
 			get
@@ -17,6 +18,12 @@ namespace MonsterLove.StateMachine
 				{
 					//Guaranteed to be availble thanks to RequireComponent
 					_stateMachine = GetComponent<StateMachineEngine>();
+				}
+
+				//This happens when we forget to inherit from StateMachineBehaviour and change it after the script has been added to a game object.
+				if(_stateMachine == null)
+				{
+					throw new Exception("Please make sure StateMachineEngine is also present on any StateMachineBehaviour objects");
 				}
 
 				return _stateMachine;

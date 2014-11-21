@@ -1,77 +1,120 @@
 using UnityEngine;
 using System.Collections;
+using MonsterLove.StateMachine;
 
-public class Main : MonoBehaviour {
-	
-	//Declare enum for each of our states. This makes it easier to specify states in the inpsector
-	public enum States 
+public class Main : StateMachineBehaviour
+{
+	//Declare which states we'd like use
+	public enum States
 	{
 		Init,
-		GamePlay,
-		GameOverWinner,
-		GameOverLoser,
+		Countdown,
+		Play,
+		Win,
+		Lose
 	}
-	
-	//Refernce to a regular game object, in this case our not so heroic main player
-	public Player player;
-	public GUIManager gui;
-	
-	//By making these public properties, and using [System.Serializable] in the state classes, these will now appear in the inspector
-	public StateInit stateInit;
-	public StateGamePlay stateGamePlay;
-	public StateGameOverWinner stateGameOverWinner;
-	public StateGameOverLoser stateGameOverLoser;
-		
-	//The referecne to our state machine
-	private FiniteStateMachine<Main, Main.States> fsm;
-	
 
-	void Start () 
+	public float health = 100;
+	public float damage = 20;
+
+	private float startHealth;
+
+	private void Awake()
 	{
-		//Initialise the state machine
-		fsm = new FiniteStateMachine<Main, Main.States>(this);
-		fsm.RegisterState(stateInit);
-		fsm.RegisterState(stateGamePlay);
-		fsm.RegisterState(stateGameOverWinner);
-		fsm.RegisterState(stateGameOverLoser);
+		startHealth = health;
+
+		//Initialize State Machine Engine
+		stateMachine.Initialize<Main, States>(this);
+
+		//Change to our first state
+		stateMachine.ChangeState(States.Init);
+	}
+
+	void OnGUI()
+	{
+		//Sometimes it is a better pattern to poll state rather than to push state in each Enter/Exit function
+		var state = stateMachine.GetState();
+
+		if (state == null) return;
+
+		GUILayout.BeginArea(new Rect(50,50,80,40));
+
+		if(state.Equals(States.Init) && GUILayout.Button("Start"))
+		{
+			stateMachine.ChangeState(States.Countdown);
+		}
+		if(state.Equals(States.Play))
+		{
+			if(GUILayout.Button("Force Win"))
+			{
+				stateMachine.ChangeState(States.Win);
+			}
+			
+			GUILayout.Label("Health: " + Mathf.Round(health).ToString());
+		}
+		if(state.Equals(States.Win) || state.Equals(States.Lose))
+		{
+			if(GUILayout.Button("Play Again"))
+			{
+				stateMachine.ChangeState(States.Countdown);
+			}
+		}
+
+		GUILayout.EndArea();
+	}
+
+	private void Init_Enter()
+	{
+		Debug.Log("Waiting for start button to be pressed");
+	}
+
+	//We can return a coroutine, this is useful animations and the like
+	private IEnumerator Countdown_Enter()
+	{
+		health = startHealth;
+
+		Debug.Log("Starting in 3...");
+		yield return new WaitForSeconds(0.5f);
+		Debug.Log("Starting in 2...");
+		yield return new WaitForSeconds(0.5f);
+		Debug.Log("Starting in 1...");
+		yield return new WaitForSeconds(0.5f);
+
+		stateMachine.ChangeState(States.Play);
+
+	}
+
+
+	private void Play_Enter()
+	{
+		Debug.Log("FIGHT!");
+	}
+
+	private void Play_Update()
+	{
+
+		health -= damage * Time.deltaTime;
+	
+		if(health < 0)
+		{
+			stateMachine.ChangeState(States.Lose);
+		}
+
 		
-		//Kick things off
-		ChangeState(stateInit.StateID);
 	}
-	
-	void Update () 
+
+	void Play_Exit()
 	{
-		//Must remember to update our state machine
-		fsm.Update();
+		Debug.Log("Game Over");
 	}
-	
-	//Some examples of utility functions for changing state.
-	//Its up to you to decide how you actually change your state
-	public void ChangeState(States newState)
+
+	void Lose_Enter()
 	{
-		fsm.ChangeState(newState);
+		Debug.Log("Lost");
 	}
-	
-	public void ChangeState(States newState, float delay)
+
+	void Win_Enter()
 	{
-		StartCoroutine(ChangeStateWithDelay(newState, delay));
-	}
-	
-	private IEnumerator ChangeStateWithDelay(States newState, float delay)
-	{
-		yield return new WaitForSeconds(delay);
-		ChangeState(newState);
-	}
-	
-	//Its a wise idea to create methods for common actions that will be used accross states as its easier to keep track and make changes. 
-	public void EnablePlayer(bool isEnabled)
-	{
-		//player.enabled = isEnabled;
-		player.gameObject.SetActiveRecursively(isEnabled);
-	}
-	
-	public void ShowGameOver()
-	{
-		
+		Debug.Log("Won");
 	}
 }

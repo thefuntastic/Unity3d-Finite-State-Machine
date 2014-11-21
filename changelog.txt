@@ -1,0 +1,12 @@
+v2.0 November 2014
+	Complete rewrite of State Machine for Unity. Now has the following features
+
+	* Simple use of Enums as state definition. 
+	* Minimal initialization - one line of code. 
+	* Incredibly easy to add/remove states
+	* Uses reflection to avoid boiler plate code - only write the methods you actually need. 
+	* Compatible with Coroutines.
+	* Tested on iOS and Android
+
+v1.0 April 2012
+	A state machine for Unity
