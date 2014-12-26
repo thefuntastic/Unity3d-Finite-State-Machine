@@ -15,7 +15,7 @@ Most state machines come from the world of C# enterprise, and are wonderfully co
 
 ## Usage
 
-An example project included (Unity 4.3.1) to show the State Machine in action.
+An example project included (Unity 4.6) to show the State Machine in action.
 
 To use the state machine you need a few simple steps
 
@@ -44,22 +44,14 @@ public enum States
 ##### Initialize the State Machine 
 
 ```C#
-stateMachine.Initialize<MyStateMachine, States>(this);
+Initialize<States>(this);
 
 ```
 This can be done at any time, but generally you would do it on start up in your Awake function. 
 
-The three things we are passing in here are:
-
-1. The class name of your state behaviour ( `MyStateMachine` )
-2. The Enum defining your states  ( `States` )
-3. A reference to the instance of your state behaviour ( `this` ) 
-
-NB `stateMachine` is an automatic reference to the class `StateMachineEngine`, which should also be automatically added when you attach your StateBehaviour to a game object.
-
 ##### You are now ready to manage state by simply calling `stateMachine.ChangeState()`
 ```C#
-stateMachine.ChangeStates(States.Init);
+ChangeStates(States.Init);
 ```
 
 ##### State callbacks defined by underscore convention ( `StateName_Method` )

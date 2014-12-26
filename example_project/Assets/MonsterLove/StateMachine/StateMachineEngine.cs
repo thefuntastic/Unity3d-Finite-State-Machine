@@ -25,6 +25,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Object = System.Object;
 
 namespace MonsterLove.StateMachine
 {
@@ -37,10 +38,10 @@ namespace MonsterLove.StateMachine
 
 		private readonly string[] ignoredNames = new[] { "add", "remove", "get", "set" };
 
-		public void Initialize<T, U>(T entity) where T : StateMachineBehaviour
+		public void Initialize<T>(StateMachineBehaviour entity)
 		{
 			//Define States
-			var values = Enum.GetValues(typeof(U));
+			var values = Enum.GetValues(typeof(T));
 			stateLookup = new Dictionary<Enum, StateMapping>();
 			for (int i = 0; i < values.Length; i++)
 			{
@@ -49,8 +50,7 @@ namespace MonsterLove.StateMachine
 			}
 
 			//Reflect methods
-			var methods =
-				typeof(T).GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
+			var methods = entity.GetType().GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
 									  BindingFlags.NonPublic);
 
 			//Bind methods to states
@@ -68,7 +68,7 @@ namespace MonsterLove.StateMachine
 				Enum key;
 				try
 				{
-					key = (Enum) Enum.Parse(typeof(U), names[0]);
+					key = (Enum) Enum.Parse(typeof(T), names[0]);
 				}
 				catch (ArgumentException)
 				{
@@ -95,47 +95,48 @@ namespace MonsterLove.StateMachine
 					case "Enter":
 						if (methods[i].ReturnType == typeof(IEnumerator))
 						{
-							targetState.Enter = CreateDelegate<T, Func<IEnumerator>>(methods[i], entity);
+							targetState.Enter = CreateDelegate<Func<IEnumerator>>(methods[i], entity);
 						}
 						else
 						{
-							var action = CreateDelegate<T, Action>(methods[i], entity);
+							var action = CreateDelegate<Action>(methods[i], entity);
 							targetState.Enter = () => { action(); return null; };
 						}
 						break;
 					case "Exit":
 						if (methods[i].ReturnType == typeof(IEnumerator))
 						{
-							targetState.Exit = CreateDelegate<T, Func<IEnumerator>>(methods[i], entity);
+							targetState.Exit = CreateDelegate<Func<IEnumerator>>(methods[i], entity);
 						}
 						else
 						{
-							var action = CreateDelegate<T, Action>(methods[i], entity);
+							var action = CreateDelegate<Action>(methods[i], entity);
 							targetState.Exit = () => { action(); return null; };
 						}
 						break;
 					case "Update":
-						targetState.Update = CreateDelegate<T, Action>(methods[i], entity);
+						targetState.Update = CreateDelegate<Action>(methods[i], entity);
 						break;
 					case "LateUpdate":
-						targetState.LateUpdate = CreateDelegate<T, Action>(methods[i], entity);
+						targetState.LateUpdate = CreateDelegate<Action>(methods[i], entity);
 						break;
 					case "FixedUpdate":
-						targetState.FixedUpdate = CreateDelegate<T, Action>(methods[i], entity);
+						targetState.FixedUpdate = CreateDelegate<Action>(methods[i], entity);
 						break;
 				}
 			}
 		}
 
-		private V CreateDelegate<T, V>(MethodInfo method, T target) where V : class
+		private V CreateDelegate<V>(MethodInfo method, Object target) where V : class
 		{
-			var ret = (Delegate.CreateDelegate(typeof(V), target, method) as V);
+			var ret = (Delegate.CreateDelegate(typeof (V), target, method) as V);
 
 			if (ret == null)
 			{
 				throw new ArgumentException("Unabled to create delegate for method called " + method.Name);
 			}
 			return ret;
+
 		}
 
 		public void ChangeState(Enum newState)

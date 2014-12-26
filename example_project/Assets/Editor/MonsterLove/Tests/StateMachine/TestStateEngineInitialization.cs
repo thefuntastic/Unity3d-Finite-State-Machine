@@ -52,7 +52,7 @@ internal class TestStateEngineInitialization : UnityUnitTest
 	[ExpectedException]
 	public void TestEnumNotUsedForInit()
 	{
-		engine.Initialize<StateMachineBehaviour, TestState>(behaviour);
+		engine.Initialize<TestState>(behaviour);
 
 		engine.ChangeState(TestTrollStates.Bogey);
 	}
@@ -63,9 +63,9 @@ internal class TestStateEngineInitialization : UnityUnitTest
 	{
 		//Should this be an exception or is this a legimate use case? I'm not sure
 
-		engine.Initialize<StateMachineBehaviour, TestState>(behaviour);
+		engine.Initialize<TestState>(behaviour);
 
-		engine.Initialize<StateMachineBehaviour, TestTrollStates>(behaviour);
+		engine.Initialize<TestTrollStates>(behaviour);
 	}
 
 	[Test]

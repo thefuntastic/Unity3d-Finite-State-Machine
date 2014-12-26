@@ -1,4 +1,4 @@
-using System;
+	using System;
 using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
@@ -33,7 +33,7 @@ public class ClassWithHiddenMethods : StateMachineBehaviour
 
 	public void TestInit () 
 	{
-		stateMachine.Initialize<ClassWithHiddenMethods, States>(this);
+		Initialize<States>();
 	}
 
 	//Causes get_TestProperty & set_TestProperty hidden method names
