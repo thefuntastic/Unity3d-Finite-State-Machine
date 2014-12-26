@@ -44,7 +44,7 @@ public enum States
 ##### Initialize the State Machine 
 
 ```C#
-Initialize<States>(this);
+Initialize<States>();
 
 ```
 This can be done at any time, but generally you would do it on start up in your Awake function. 
