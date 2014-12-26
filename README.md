@@ -117,7 +117,7 @@ There are no dependencies, but if you're working with the source files, the test
 
 This implementation uses reflection to automatically bind the state methods callbacks for each state. This saves you having to write endless boilerplate and generally makes life a lot more pleasant. But of course reflection is slow, so we try minimize this by only doing it once during the call to `Initialize`. 
 
-For most objects this won't be a problem, but not that if you are spawning many objects during game play it might pay to make use of an object pool, and initialize objects on start up instead. (This is generally good practice anyway). 
+For most objects this won't be a problem, but note that if you are spawning many objects during game play it might pay to make use of an object pool, and initialize objects on start up instead. (This is generally good practice anyway). 
 
 ##### Memory Allocation Free?
 This is designed to target mobile, as such should be memory allocation free. Right now I think we are failing on that front, primarily due to IEnumerator's generating garbage. This remains a work in progress. 
@@ -156,4 +156,5 @@ It is heavily inspired by the state machine found at http://unitygems.com/ (avai
 For feedback and suggestions:
 
 http://www.thefuntastic.com/2012/04/simple-finite-state-machine/
+
 http://www.twitter.com/thefuntastic
