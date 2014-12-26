@@ -49,7 +49,7 @@ Initialize<States>();
 ```
 This can be done at any time, but generally you would do it on start up in your Awake function. 
 
-##### You are now ready to manage state by simply calling `stateMachine.ChangeState()`
+##### You are now ready to manage state by simply calling `ChangeState()`
 ```C#
 ChangeStates(States.Init);
 ```
