@@ -1,3 +1,6 @@
+v2.1 December 2014
+	*Change initialization method and added convenience methods on StateMachineBehaviour. NotePrevious projects will need change Initialization calls.
+
 v2.0 November 2014
 	Complete rewrite of State Machine for Unity. Now has the following features
 

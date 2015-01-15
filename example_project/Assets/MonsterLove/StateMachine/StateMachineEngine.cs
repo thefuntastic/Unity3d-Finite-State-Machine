@@ -25,6 +25,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Object = System.Object;
 
 namespace MonsterLove.StateMachine
 {
@@ -33,16 +34,14 @@ namespace MonsterLove.StateMachine
 		private StateMapping currentState;
 
 		private Dictionary<Enum, StateMapping> stateLookup;
-		private Dictionary<string, Delegate> methodLookup; 
+		private Dictionary<string, Delegate> methodLookup;
 
-		/// <summary>
-		/// You must call this from a StateMachineBeviour subclass before using any states.
-		/// </summary>
-		/// <param name="entity">The calling StateMachineBehaviour subclass that wishes to use States</param>
-		public void Initialize<T, U>(T entity) where T : StateMachineBehaviour
+		private readonly string[] ignoredNames = new[] { "add", "remove", "get", "set" };
+
+		public void Initialize<T>(StateMachineBehaviour entity)
 		{
 			//Define States
-			var values = Enum.GetValues(typeof(U));
+			var values = Enum.GetValues(typeof(T));
 			stateLookup = new Dictionary<Enum, StateMapping>();
 			for (int i = 0; i < values.Length; i++)
 			{
@@ -51,8 +50,7 @@ namespace MonsterLove.StateMachine
 			}
 
 			//Reflect methods
-			var methods =
-				typeof(T).GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
+			var methods = entity.GetType().GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
 									  BindingFlags.NonPublic);
 
 			//Bind methods to states
@@ -62,7 +60,7 @@ namespace MonsterLove.StateMachine
 				var names = methods[i].Name.Split(separator);
 
 				//Ignore functions without an underscore
-				if(names.Length <= 1)
+				if (names.Length <= 1)
 				{
 					continue;
 				}
@@ -70,76 +68,85 @@ namespace MonsterLove.StateMachine
 				Enum key;
 				try
 				{
-					key = (Enum) Enum.Parse(typeof(U), names[0]);
+					key = (Enum) Enum.Parse(typeof(T), names[0]);
 				}
 				catch (ArgumentException)
 				{
+					//Some things (evetns, properties) generate automatic method. Ignore these
+					for (int j = 0; j < ignoredNames.Length; j++)
+					{
+						if (names[0] == ignoredNames[j])
+						{
+							goto SkipWarning;
+						}
+					}
+
 					Debug.LogWarning("Method with name " + methods[i].Name + " could not resolve a matching state. Check method spelling");
+					continue;
+
+				SkipWarning:
 					continue;
 				}
 
 				var targetState = stateLookup[key];
 
-				switch(names[1])
+				switch (names[1])
 				{
 					case "Enter":
-						if(methods[i].ReturnType == typeof(IEnumerator))
+						if (methods[i].ReturnType == typeof(IEnumerator))
 						{
-							targetState.Enter = CreateDelegate<T, Func<IEnumerator>>(methods[i], entity);
+							targetState.Enter = CreateDelegate<Func<IEnumerator>>(methods[i], entity);
 						}
 						else
 						{
-							var action = CreateDelegate<T, Action>(methods[i], entity);
+							var action = CreateDelegate<Action>(methods[i], entity);
 							targetState.Enter = () => { action(); return null; };
 						}
 						break;
 					case "Exit":
-						if(methods[i].ReturnType == typeof(IEnumerator))
+						if (methods[i].ReturnType == typeof(IEnumerator))
 						{
-							targetState.Exit = CreateDelegate<T, Func<IEnumerator>>(methods[i], entity);
+							targetState.Exit = CreateDelegate<Func<IEnumerator>>(methods[i], entity);
 						}
 						else
 						{
-							var action = CreateDelegate<T, Action>(methods[i], entity);
+							var action = CreateDelegate<Action>(methods[i], entity);
 							targetState.Exit = () => { action(); return null; };
 						}
 						break;
 					case "Update":
-						targetState.Update = CreateDelegate<T, Action> (methods[i], entity);
+						targetState.Update = CreateDelegate<Action>(methods[i], entity);
 						break;
 					case "LateUpdate":
-						targetState.LateUpdate = CreateDelegate<T, Action>(methods[i], entity);
+						targetState.LateUpdate = CreateDelegate<Action>(methods[i], entity);
 						break;
 					case "FixedUpdate":
-						targetState.FixedUpdate = CreateDelegate<T, Action>(methods[i], entity);
+						targetState.FixedUpdate = CreateDelegate<Action>(methods[i], entity);
 						break;
 				}
 			}
 		}
 
-		private V CreateDelegate<T, V>(MethodInfo method, T target) where V : class
+		private V CreateDelegate<V>(MethodInfo method, Object target) where V : class
 		{
 			var ret = (Delegate.CreateDelegate(typeof (V), target, method) as V);
 
-			if(ret == null)
+			if (ret == null)
 			{
 				throw new ArgumentException("Unabled to create delegate for method called " + method.Name);
 			}
 			return ret;
+
 		}
 
-		///<summary>
-		/// Call this from StateMachineBehaviour to effect a State transition
-		///</summary>
-		///<param name="newState">The new state you wish to transition to</param> 
 		public void ChangeState(Enum newState)
 		{
-			if(stateLookup == null)
+			if (stateLookup == null)
 			{
 				throw new Exception("States have not been configured, please call initialized before trying to set state");
 			}
 
-			if(!stateLookup.ContainsKey(newState))
+			if (!stateLookup.ContainsKey(newState))
 			{
 				throw new Exception("No state with the name " + newState.ToString() + " can be found. Please make sure you are called the correct type the statemachine was initialized with");
 			}
@@ -153,7 +160,7 @@ namespace MonsterLove.StateMachine
 
 		private IEnumerator ChangeToNewStateRoutine(StateMapping newState)
 		{
-			if(currentState != null)
+			if (currentState != null)
 			{
 				var exitRoutine = currentState.Exit();
 
@@ -164,8 +171,8 @@ namespace MonsterLove.StateMachine
 			}
 
 			currentState = newState;
-			
-			if(currentState != null)
+
+			if (currentState != null)
 			{
 				var enterRoutine = currentState.Enter();
 
@@ -186,7 +193,7 @@ namespace MonsterLove.StateMachine
 
 		void Update()
 		{
-			if(currentState != null)
+			if (currentState != null)
 			{
 				currentState.Update();
 			}
@@ -216,7 +223,7 @@ namespace MonsterLove.StateMachine
 
 		public Enum GetState()
 		{
-			if(currentState != null)
+			if (currentState != null)
 			{
 				return currentState.state;
 			}

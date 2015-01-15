@@ -29,5 +29,20 @@ namespace MonsterLove.StateMachine
 				return _stateMachine;
 			}
 		}
+
+		public Enum GetState()
+		{
+			return stateMachine.GetState();
+		}
+
+		protected void Initialize<T>()
+		{
+			stateMachine.Initialize<T>(this);
+		}
+
+		protected void ChangeState(Enum newState)
+		{
+			stateMachine.ChangeState(newState);
+		}
 	}
 }

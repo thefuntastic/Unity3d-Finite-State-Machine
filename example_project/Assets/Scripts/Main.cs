@@ -24,16 +24,16 @@ public class Main : StateMachineBehaviour
 		startHealth = health;
 
 		//Initialize State Machine Engine
-		stateMachine.Initialize<Main, States>(this);
+		Initialize<States>();
 
 		//Change to our first state
-		stateMachine.ChangeState(States.Init);
+		ChangeState(States.Init);
 	}
 
 	void OnGUI()
 	{
 		//Sometimes it is a better pattern to poll state rather than to push state in each Enter/Exit function
-		var state = stateMachine.GetState();
+		var state = GetState();
 
 		if (state == null) return;
 
@@ -41,13 +41,13 @@ public class Main : StateMachineBehaviour
 
 		if(state.Equals(States.Init) && GUILayout.Button("Start"))
 		{
-			stateMachine.ChangeState(States.Countdown);
+			ChangeState(States.Countdown);
 		}
 		if(state.Equals(States.Play))
 		{
 			if(GUILayout.Button("Force Win"))
 			{
-				stateMachine.ChangeState(States.Win);
+				ChangeState(States.Win);
 			}
 			
 			GUILayout.Label("Health: " + Mathf.Round(health).ToString());
@@ -56,7 +56,7 @@ public class Main : StateMachineBehaviour
 		{
 			if(GUILayout.Button("Play Again"))
 			{
-				stateMachine.ChangeState(States.Countdown);
+				ChangeState(States.Countdown);
 			}
 		}
 
@@ -80,7 +80,7 @@ public class Main : StateMachineBehaviour
 		Debug.Log("Starting in 1...");
 		yield return new WaitForSeconds(0.5f);
 
-		stateMachine.ChangeState(States.Play);
+		ChangeState(States.Play);
 
 	}
 
@@ -97,7 +97,7 @@ public class Main : StateMachineBehaviour
 	
 		if(health < 0)
 		{
-			stateMachine.ChangeState(States.Lose);
+			ChangeState(States.Lose);
 		}
 
 		
