@@ -1,3 +1,7 @@
+v2.2 January 2015
+	*State Update & Late Update functions no longer run during transitions (i.e. Enter & Exit functions)
+	*Bug fix: Changing state from a states Update function no longer cause states to enter twice. Note: changing from functions outside of a state can still cause this behaviour
+
 v2.1 December 2014
 	*Change initialization method and added convenience methods on StateMachineBehaviour. NotePrevious projects will need change Initialization calls.
 
