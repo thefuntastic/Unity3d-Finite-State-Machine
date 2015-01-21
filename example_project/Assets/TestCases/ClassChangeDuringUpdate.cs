@@ -9,10 +9,10 @@ public class ClassChangeDuringUpdate : StateMachineBehaviour
 {
 	public enum States
 	{
-		Idle,
-		Prize,
-		PrizeIdle,
-		PrizeAttract
+		NotUsed,
+		AlsoNotUsed,
+		One,
+		Two
 	}
 
 	public float prizeIdleDuration;
@@ -30,40 +30,38 @@ public class ClassChangeDuringUpdate : StateMachineBehaviour
 		Initialize<States>();
 		
 
-		ChangeState(States.PrizeIdle);
+		ChangeState(States.One);
 	}
 
 
 
 	//Use timer here in stead of couroutines to prevent the stack depth getting too deeps, as these couroutines will cycle into each other
-	void PrizeIdle_Enter()
+	void One_Enter()
 	{
-		Debug.Log("Prize idle: Entered " + Time.time);
+		Debug.Log("One: Entered " + Time.time);
 
 		prizeIdleStartTime = Time.time;
 
 		oneEnter++;
 	}
 
-	void PrizeIdle_Update()
+	void One_Update()
 	{
 		if(Time.time - prizeIdleStartTime > prizeIdleDuration)
 		{
-			Debug.Log("Changing to attract : " + Time.time);
-			ChangeState(States.PrizeAttract);
+			Debug.Log("Changing to Two : " + Time.time);
+			ChangeState(States.Two);
 		}
 	}
 
 
-	IEnumerator PrizeAttract_Enter()
+	IEnumerator Two_Enter()
 	{
-		Debug.Log("Prize Attract: Entered " + Time.time  );
+		Debug.Log("Two Entered " + Time.time  );
 		twoEnter++;
 
 		yield return null;
 
-
-		//ChangeState(States.PrizeIdle);
 	}
 
 

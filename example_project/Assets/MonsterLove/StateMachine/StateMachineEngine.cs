@@ -38,6 +38,8 @@ namespace MonsterLove.StateMachine
 
 		private readonly string[] ignoredNames = new[] { "add", "remove", "get", "set" };
 
+		private bool isInTransition = false;
+
 		public void Initialize<T>(StateMachineBehaviour entity)
 		{
 			//Define States
@@ -160,8 +162,11 @@ namespace MonsterLove.StateMachine
 
 		private IEnumerator ChangeToNewStateRoutine(StateMapping newState)
 		{
+			isInTransition = true;
+
 			if (currentState != null)
 			{
+
 				var exitRoutine = currentState.Exit();
 
 				if (exitRoutine != null)
@@ -181,6 +186,8 @@ namespace MonsterLove.StateMachine
 					yield return StartCoroutine(enterRoutine);
 				}
 			}
+
+			isInTransition = false;
 		}
 
 		void FixedUpdate()
@@ -193,7 +200,7 @@ namespace MonsterLove.StateMachine
 
 		void Update()
 		{
-			if (currentState != null)
+			if (currentState != null && !isInTransition)
 			{
 				currentState.Update();
 			}
@@ -201,7 +208,7 @@ namespace MonsterLove.StateMachine
 
 		void LateUpdate()
 		{
-			if (currentState != null)
+			if (currentState != null && !isInTransition)
 			{
 				currentState.LateUpdate();
 			}
