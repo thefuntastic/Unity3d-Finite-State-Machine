@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
-public class StateMachineRepoDoubleFire : StateMachineBehaviour
+public class ClassChangeDuringUpdate : StateMachineBehaviour
 {
 	public enum States
 	{
