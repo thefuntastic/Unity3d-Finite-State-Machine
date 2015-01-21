@@ -15,9 +15,9 @@ public class ClassChangeDuringUpdate : StateMachineBehaviour
 		Two
 	}
 
-	public float prizeIdleDuration;
+	public float oneDuration = 1f;
 
-	private float prizeIdleStartTime;
+	private float oneStartTime;
 
 	public int oneEnter = 0;
 	public int twoEnter = 0;
@@ -40,14 +40,14 @@ public class ClassChangeDuringUpdate : StateMachineBehaviour
 	{
 		Debug.Log("One: Entered " + Time.time);
 
-		prizeIdleStartTime = Time.time;
+		oneStartTime = Time.time;
 
 		oneEnter++;
 	}
 
 	void One_Update()
 	{
-		if(Time.time - prizeIdleStartTime > prizeIdleDuration)
+		if(Time.time - oneStartTime > oneDuration)
 		{
 			Debug.Log("Changing to Two : " + Time.time);
 			ChangeState(States.Two);
