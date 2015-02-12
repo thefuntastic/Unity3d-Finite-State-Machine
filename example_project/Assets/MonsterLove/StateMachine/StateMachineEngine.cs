@@ -32,6 +32,7 @@ namespace MonsterLove.StateMachine
 	public class StateMachineEngine : MonoBehaviour
 	{
 		private StateMapping currentState;
+		private StateMapping destinationState;
 
 		private Dictionary<Enum, StateMapping> stateLookup;
 		private Dictionary<string, Delegate> methodLookup;
@@ -39,6 +40,10 @@ namespace MonsterLove.StateMachine
 		private readonly string[] ignoredNames = new[] { "add", "remove", "get", "set" };
 
 		private bool isInTransition = false;
+		private IEnumerator currentTransition;
+		private IEnumerator exitRoutine;
+		private IEnumerator enterRoutine;
+		private IEnumerator queuedChange;
 
 		public void Initialize<T>(StateMachineBehaviour entity)
 		{
@@ -131,7 +136,7 @@ namespace MonsterLove.StateMachine
 
 		private V CreateDelegate<V>(MethodInfo method, Object target) where V : class
 		{
-			var ret = (Delegate.CreateDelegate(typeof (V), target, method) as V);
+			var ret = (Delegate.CreateDelegate(typeof(V), target, method) as V);
 
 			if (ret == null)
 			{
@@ -141,7 +146,7 @@ namespace MonsterLove.StateMachine
 
 		}
 
-		public void ChangeState(Enum newState)
+		public void ChangeState(Enum newState, StateMachineTransition transition = StateMachineTransition.Safe)
 		{
 			if (stateLookup == null)
 			{
@@ -157,37 +162,95 @@ namespace MonsterLove.StateMachine
 
 			if (currentState == nextState) return;
 
-			StartCoroutine(ChangeToNewStateRoutine(nextState));
+			//Cancel any queued changes.
+			if (queuedChange != null)
+			{
+				StopCoroutine(queuedChange);
+				queuedChange = null;
+			}
+
+			switch (transition)
+			{
+				//case StateMachineTransition.Blend:
+					//Do nothing - allows the state transitions to overlap each other. This is a dumb idea, as previous state might trigger new changes. 
+					//A better way would be to start the two couroutines at the same time. IE don't wait for exit before starting start.
+					//How does this work in terms of overwrite?
+					//Is there a way to make this safe, I don't think so? 
+					//break;
+				case StateMachineTransition.Safe:
+					if (isInTransition)
+					{
+						if (exitRoutine != null) //We are already exiting current state on our way to our previous target state
+						{
+							//Overwrite with our new target
+							destinationState = nextState;
+							return;
+						}
+
+						if (enterRoutine != null) //We are already entering our previous target state. Need to wait for that to finish and call the exit routine.
+						{
+							//Damn, I need to test this hard
+							queuedChange = WaitForPreviousTransition(nextState);
+							StartCoroutine(queuedChange);
+							return;
+						}
+					}
+					break;
+				case StateMachineTransition.Overwrite:
+					if (currentTransition != null)
+					{
+						StopCoroutine(currentTransition);
+					}
+					break;
+			}
+
+			isInTransition = true;
+			currentTransition = ChangeToNewStateRoutine(nextState);
+			StartCoroutine(currentTransition);
 		}
 
 		private IEnumerator ChangeToNewStateRoutine(StateMapping newState)
 		{
-			isInTransition = true;
+			
+			destinationState = newState; //Chache this so that we can overwrite it and hijack a transition
 
 			if (currentState != null)
 			{
-
-				var exitRoutine = currentState.Exit();
+				exitRoutine = currentState.Exit();
 
 				if (exitRoutine != null)
 				{
 					yield return StartCoroutine(exitRoutine);
 				}
+
+				exitRoutine = null;
 			}
 
-			currentState = newState;
+			currentState = destinationState;
 
 			if (currentState != null)
 			{
-				var enterRoutine = currentState.Enter();
+				enterRoutine = currentState.Enter();
 
 				if (enterRoutine != null)
 				{
 					yield return StartCoroutine(enterRoutine);
 				}
+
+				enterRoutine = null;
 			}
 
 			isInTransition = false;
+		}
+
+		IEnumerator WaitForPreviousTransition(StateMapping nextState)
+		{
+			while (isInTransition)
+			{
+				yield return null;
+			}
+
+			ChangeState(nextState.state);
 		}
 
 		void FixedUpdate()
@@ -200,7 +263,7 @@ namespace MonsterLove.StateMachine
 
 		void Update()
 		{
-			if (currentState != null && !isInTransition)
+			if (currentState != null && !IsInTransition)
 			{
 				currentState.Update();
 			}
@@ -208,7 +271,7 @@ namespace MonsterLove.StateMachine
 
 		void LateUpdate()
 		{
-			if (currentState != null && !isInTransition)
+			if (currentState != null && !IsInTransition)
 			{
 				currentState.LateUpdate();
 			}
@@ -217,12 +280,15 @@ namespace MonsterLove.StateMachine
 		public static void DoNothing()
 		{
 		}
+
 		public static void DoNothingCollider(Collider other)
 		{
 		}
+
 		public static void DoNothingCollision(Collision other)
 		{
 		}
+
 		public static IEnumerator DoNothingCoroutine()
 		{
 			yield break;
@@ -237,6 +303,18 @@ namespace MonsterLove.StateMachine
 
 			return null;
 		}
+
+		public bool IsInTransition
+		{
+			get { return isInTransition; }
+		}
+	}
+
+	public enum StateMachineTransition
+	{
+		//Blend,
+		Overwrite,
+		Safe
 	}
 
 	public class StateMapping

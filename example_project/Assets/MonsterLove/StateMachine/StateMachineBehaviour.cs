@@ -44,5 +44,10 @@ namespace MonsterLove.StateMachine
 		{
 			stateMachine.ChangeState(newState);
 		}
+
+		protected void ChangeState(Enum newState, StateMachineTransition transition)
+		{
+			stateMachine.ChangeState(newState, transition);
+		}
 	}
 }
