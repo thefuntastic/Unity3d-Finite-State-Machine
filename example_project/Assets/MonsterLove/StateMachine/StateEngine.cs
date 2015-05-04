@@ -29,7 +29,7 @@ using Object = System.Object;
 
 namespace MonsterLove.StateMachine
 {
-	public class StateMachineEngine : MonoBehaviour
+	public class StateEngine : MonoBehaviour
 	{
 		private StateMapping currentState;
 		private StateMapping destinationState;
@@ -45,7 +45,7 @@ namespace MonsterLove.StateMachine
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		public void Initialize<T>(StateMachineBehaviour entity)
+		public void Initialize<T>(StateBehaviour entity)
 		{
 			//Define States
 			var values = Enum.GetValues(typeof(T));
@@ -321,13 +321,13 @@ namespace MonsterLove.StateMachine
 	{
 		public Enum state;
 
-		public Func<IEnumerator> Enter = StateMachineEngine.DoNothingCoroutine;
-		public Func<IEnumerator> Exit = StateMachineEngine.DoNothingCoroutine;
-		//public Action Enter = StateMachineEngine.DoNothing;
-		//public Action Exit = StateMachineEngine.DoNothing;
-		public Action Update = StateMachineEngine.DoNothing;
-		public Action LateUpdate = StateMachineEngine.DoNothing;
-		public Action FixedUpdate = StateMachineEngine.DoNothing;
+		public Func<IEnumerator> Enter = StateEngine.DoNothingCoroutine;
+		public Func<IEnumerator> Exit = StateEngine.DoNothingCoroutine;
+		//public Action Enter = StateEngine.DoNothing;
+		//public Action Exit = StateEngine.DoNothing;
+		public Action Update = StateEngine.DoNothing;
+		public Action LateUpdate = StateEngine.DoNothing;
+		public Action FixedUpdate = StateEngine.DoNothing;
 
 		public StateMapping(Enum state)
 		{

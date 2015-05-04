@@ -12,14 +12,14 @@ internal class TestBasicTransitions : UnityUnitTest
 
 	private GameObject go;
 	private ClassWithBasicStates behaviour;
-	private StateMachineEngine engine;
+	private StateEngine engine;
 
 	[SetUp]
 	public void Init()
 	{
 		go = CreateGameObject("stateTest");
 		behaviour = go.AddComponent<ClassWithBasicStates>();
-		engine = go.GetComponent<StateMachineEngine>();
+		engine = go.GetComponent<StateEngine>();
 
 		behaviour.Init();
 	}

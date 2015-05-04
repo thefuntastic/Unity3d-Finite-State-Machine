@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class ClassChangeDuringLongExit : StateMachineBehaviour 
+public class ClassChangeDuringLongExit : StateBehaviour 
 {
 	public enum States
 	{

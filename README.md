@@ -51,7 +51,7 @@ This can be done at any time, but generally you would do it on start up in your 
 
 ##### You are now ready to manage state by simply calling `ChangeState()`
 ```C#
-ChangeStates(States.Init);
+ChangeState(States.Init);
 ```
 
 ##### State callbacks defined by underscore convention ( `StateName_Method` )

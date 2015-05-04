@@ -25,15 +25,15 @@ internal class TestStateEngineInitialization : UnityUnitTest
 	}
 
 	private GameObject go;
-	private StateMachineBehaviour behaviour;
-	private StateMachineEngine engine;
+	private StateBehaviour behaviour;
+	private StateEngine engine;
 
 	[SetUp]
 	public void Init()
 	{
 		go = CreateGameObject("stateTest");
-		behaviour = go.AddComponent<StateMachineBehaviour>();
-		engine = go.GetComponent<StateMachineEngine>();
+		behaviour = go.AddComponent<StateBehaviour>();
+		engine = go.GetComponent<StateEngine>();
 	}
 
 	[TearDown]

@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class Main : StateMachineBehaviour
+public class Main : StateBehaviour
 {
 	//Declare which states we'd like use
 	public enum States

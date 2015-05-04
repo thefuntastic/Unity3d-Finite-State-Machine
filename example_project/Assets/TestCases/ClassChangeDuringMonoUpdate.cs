@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
-public class ClassChangeDuringMonoUpdate : StateMachineBehaviour
+public class ClassChangeDuringMonoUpdate : StateBehaviour
 {
 	public enum States
 	{

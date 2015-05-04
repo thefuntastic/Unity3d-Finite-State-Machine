@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class ClassChangeDuringLongEnter : StateMachineBehaviour 
+public class ClassChangeDuringLongEnter : StateBehaviour 
 {
 	public enum States
 	{

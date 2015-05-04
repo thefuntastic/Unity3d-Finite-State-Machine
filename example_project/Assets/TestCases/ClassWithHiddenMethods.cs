@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class ClassWithHiddenMethods : StateMachineBehaviour 
+public class ClassWithHiddenMethods : StateBehaviour 
 {
 	//Causes add_MyEvent & remove_MyEvent hidden method names
 	public event Action MyEvent;
