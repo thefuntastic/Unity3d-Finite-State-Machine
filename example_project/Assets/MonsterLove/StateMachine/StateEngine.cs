@@ -31,6 +31,8 @@ namespace MonsterLove.StateMachine
 {
 	public class StateEngine : MonoBehaviour
 	{
+		public event Action<System.Enum> Changed;
+
 		private StateMapping currentState;
 		private StateMapping destinationState;
 
@@ -146,7 +148,7 @@ namespace MonsterLove.StateMachine
 
 		}
 
-		public void ChangeState(Enum newState, StateMachineTransition transition = StateMachineTransition.Safe)
+		public void ChangeState(Enum newState, StateTransition transition = StateTransition.Safe)
 		{
 			if (stateLookup == null)
 			{
@@ -177,7 +179,7 @@ namespace MonsterLove.StateMachine
 					//How does this work in terms of overwrite?
 					//Is there a way to make this safe, I don't think so? 
 					//break;
-				case StateMachineTransition.Safe:
+				case StateTransition.Safe:
 					if (isInTransition)
 					{
 						if (exitRoutine != null) //We are already exiting current state on our way to our previous target state
@@ -196,10 +198,11 @@ namespace MonsterLove.StateMachine
 						}
 					}
 					break;
-				case StateMachineTransition.Overwrite:
+				case StateTransition.Overwrite:
 					if (currentTransition != null)
 					{
-						StopCoroutine(currentTransition);
+						var transitionReference = currentTransition;
+						StopCoroutine(transitionReference);
 					}
 					break;
 			}
@@ -238,8 +241,14 @@ namespace MonsterLove.StateMachine
 				}
 
 				enterRoutine = null;
+				
+				//Broadcast change only after enter transition has begun. 
+				if (Changed != null)
+				{
+					Changed(currentState.state);
+				}
 			}
-
+			
 			isInTransition = false;
 		}
 
@@ -310,7 +319,7 @@ namespace MonsterLove.StateMachine
 		}
 	}
 
-	public enum StateMachineTransition
+	public enum StateTransition
 	{
 		//Blend,
 		Overwrite,

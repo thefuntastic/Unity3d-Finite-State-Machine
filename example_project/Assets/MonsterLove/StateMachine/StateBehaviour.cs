@@ -4,12 +4,17 @@ using UnityEngine;
 
 namespace MonsterLove.StateMachine
 {
+	/* Implementation note
+	 * A more elegant approach might be to use the generic form
+	 * StateBehaviour<T> : MonoBehaviour where T : Enum
+	 * Unfortunately the C# CLR doesn't support enums as type constraints and probably never will. 
+	 */
+
 	[RequireComponent(typeof(StateEngine))]
 	public class StateBehaviour : MonoBehaviour
 	{
 		private StateEngine _stateMachine;
 
-		
 		public StateEngine stateMachine
 		{
 			get
@@ -40,12 +45,12 @@ namespace MonsterLove.StateMachine
 			stateMachine.Initialize<T>(this);
 		}
 
-		protected void ChangeState(Enum newState)
+		protected virtual void ChangeState(Enum newState)
 		{
 			stateMachine.ChangeState(newState);
 		}
 
-		protected void ChangeState(Enum newState, StateMachineTransition transition)
+		protected virtual void ChangeState(Enum newState, StateTransition transition)
 		{
 			stateMachine.ChangeState(newState, transition);
 		}
