@@ -118,7 +118,7 @@ The default is `StateTransition.Safe`. This will always allows the current state
 ChangeState(States.MyNextState, StateTransition.Overwrite);
 ```
 
-`StateMahcine.Overwrite` will cancel any current transitions, and call the next state immediately. This means any code which has yet to run in enter and exit routines will be skipped. If you need to ensure you end on a particular state, the finally function will always be called:
+`StateMahcine.Overwrite` will cancel any current transitions, and call the next state immediately. This means any code which has yet to run in enter and exit routines will be skipped. If you need to ensure you end with a particular configuration, the finally function will always be called:
 
 ```C#
 void MyCurrentState_Finally()
