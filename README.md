@@ -102,7 +102,7 @@ These methods can be private or public. The methods themselves are all optional,
 
 Couroutines are supported on Enter and Exit, simply return `IEnumerator`. This can be great way to accommodate animations.
 
-Finally is a special method that always gets called after a state is exited. This is a good place to remove lingering references such as event listeners. Note: this must return void and can't an IEnumerator
+Finally is a special method guaranteed to be called after a state has exited. This is a good place to perform any hygenie operations such as removing event listeners. Note: Finally does not support coroutines.
 
 ##### Transitions
 
