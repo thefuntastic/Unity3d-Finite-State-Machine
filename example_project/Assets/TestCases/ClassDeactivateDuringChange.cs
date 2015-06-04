@@ -22,6 +22,7 @@ public class ClassDeactivateDuringChange : StateBehaviour
 	public int oneEnter;
 	public int oneExit;
 	public int oneExitComplete;
+	public int oneFinally;
 	public int twoEnter;
 	public int threeEnter;
 
@@ -53,10 +54,16 @@ public class ClassDeactivateDuringChange : StateBehaviour
 		yield return new WaitForSeconds(0.5f); 
 
 		helper.SetTimeout(ChangeToThree, 0.5f);
+		// This might be breaking the test runner. Need to try figure this out
 		gameObject.SetActive(false);
 
 		oneExitComplete++;
 		Debug.Log("One Exit Complete" + Time.time);
+	}
+
+	void One_Finally()
+	{
+		oneFinally++;
 	}
 
 	void Two_Enter()

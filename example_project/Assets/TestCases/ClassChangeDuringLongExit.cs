@@ -14,6 +14,7 @@ public class ClassChangeDuringLongExit : StateBehaviour
 	public int oneEnter;
 	public int oneUpdate;
 	public int oneExit;
+	public int oneFinally;
 	public int twoEnter;
 
 	void Awake()
@@ -66,6 +67,11 @@ public class ClassChangeDuringLongExit : StateBehaviour
 		yield return null;
 
 		Debug.Log("One Exit Complete " + Time.time);
+	}
+
+	void One_Finally()
+	{
+		oneFinally++;
 	}
 
 	IEnumerator Two_Enter()
