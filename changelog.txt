@@ -1,3 +1,8 @@
+v2.3 April 2015
+	*Breaking change: Refactored StateMachineBehaviour and StateMachineEngine to StateBehaviour and StateEngine to avoid Unity5 conflicts
+	*Added the concept of StateTransition. Two options: Safe and Overwrite. The default is safe which allows the current coroutine to finish before changing to the next state. 
+	*Better test coverage using UnityTestTools integration tests
+
 v2.2 January 2015
 	*State Update & Late Update functions no longer run during transitions (i.e. Enter & Exit functions)
 	*Bug fix: Changing state from a states Update function no longer cause states to enter twice. Note: changing from functions outside of a state can still cause this behaviour

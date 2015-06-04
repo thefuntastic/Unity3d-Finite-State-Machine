@@ -5,11 +5,9 @@ using MonsterLove.StateMachine;
 
 /// TEST DESCRIPTION
 /// 
-/// Make sure that the exit function only happens after the enter funciton is completed, else it throws an error. The test passes when a period of time
-/// has elapsed without throwing an error. 
-/// 
-/// Testing the correctness of this method of updating is done in ClassChangeDuringMonoUpdate
-public class ClassChangeDuringLongEnter : StateBehaviour 
+/// Make sure that when we call overwrite during a long enter routine, Enter is cancelled and the next state is called immediately
+/// without calling the exit function.
+public class ClassOverwriteLongEnter : StateBehaviour 
 {
 	public enum States
 	{
@@ -24,9 +22,10 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 	public int oneUpdate;
 	public int oneExit;
 	public int twoEnter;
+	public bool oneEntered = false;
+	public bool twoEntered = true;
 
 	private float oneStartTime;
-	private bool oneEntered = false;
 
 	void Awake()
 	{
@@ -34,7 +33,6 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 		ChangeState(States.One);
 	}
 
-	
 	IEnumerator One_Enter()
 	{
 		Debug.Log("One Enter " + Time.time);
@@ -43,13 +41,9 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 		
 		oneEnter++;
 
-		int count = 1;
-		while (count++ < 120) // Two secs 
-		{
-			yield return null;
-		}
+		yield return new WaitForSeconds(oneDuration * 2);
 
-		Debug.Log("One Complete " + Time.time);
+		Debug.Log("One Enter Complete " + Time.time);
 
 		oneEntered = true;
 	}
@@ -64,7 +58,7 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 			if (Time.time - oneStartTime > oneDuration)
 			{
 				Debug.Log("Changing to Two : " + Time.time);
-				ChangeState(States.Two);
+				ChangeState(States.Two, StateTransition.Overwrite);
 			}
 		}
 	}
@@ -74,16 +68,21 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 		oneExit++;
 		Debug.Log("One Exit " + Time.time);
 
-		if(!oneEntered)
-		{
-			throw new Exception("One exit started before enter is complete");
-		}
+		//if(!oneEntered)
+		//{
+		//	throw new Exception("One exit started before enter is complete");
+		//}
 
 	}
 
-	void Two_Enter()
+	IEnumerator Two_Enter()
 	{
 		Debug.Log("Two Enter " + Time.time );
 		twoEnter++;
+
+		yield return new WaitForSeconds(oneDuration*0.5f);
+
+		Debug.Log("Two Enter Complete " + Time.time);
+		twoEntered = true;
 	}
 }

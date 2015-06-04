@@ -5,6 +5,9 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
+/// TEST DESCRIPTION
+/// 
+/// Make sure that when we change during a monobehvaiour function call (ie Update) that we aren't double triggering changes to other states. Two_Enter is called once and only once.
 public class ClassChangeDuringMonoUpdate : StateBehaviour
 {
 	public enum States
@@ -22,7 +25,6 @@ public class ClassChangeDuringMonoUpdate : StateBehaviour
 	public int oneEnter = 0;
 	public int twoEnter = 0;
 
-	
 
 	void Awake()
 	{
@@ -33,7 +35,7 @@ public class ClassChangeDuringMonoUpdate : StateBehaviour
 		ChangeState(States.One);
 	}
 	
-	//Use timer here in stead of couroutines to prevent the stack depth getting too deeps, as these couroutines will cycle into each other
+	//Unverified assumption: Use timer here in stead of couroutines to prevent the stack depth getting too deeps, as these couroutines will cycle into each other
 	void One_Enter()
 	{
 		Debug.Log("One: Entered " + Time.time);

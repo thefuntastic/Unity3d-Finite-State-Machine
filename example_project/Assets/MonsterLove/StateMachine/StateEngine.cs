@@ -332,8 +332,7 @@ namespace MonsterLove.StateMachine
 
 		public Func<IEnumerator> Enter = StateEngine.DoNothingCoroutine;
 		public Func<IEnumerator> Exit = StateEngine.DoNothingCoroutine;
-		//public Action Enter = StateEngine.DoNothing;
-		//public Action Exit = StateEngine.DoNothing;
+		public Action Finally = StateEngine.DoNothing;
 		public Action Update = StateEngine.DoNothing;
 		public Action LateUpdate = StateEngine.DoNothing;
 		public Action FixedUpdate = StateEngine.DoNothing;
