@@ -1,6 +1,6 @@
 # Unity3D - Simple Finite State Machine (C#)
 
-State machines are a very effective way to manage game state, either on your main game play object (Game Over, Restart, Continue etc) or on individual actors and NPCs (AI behaviours, Animations, etc). The following is a simple state machine that should work well within any unity context. 
+State machines are a very effective way to manage game state, either on your main game play object (Game Over, Restart, Continue etc) or on individual actors and NPCs (AI behaviours, Animations, etc). The following is a simple state machine that should work well within any Unity context. 
 
 ## Designed with simplicity in mind
 
@@ -94,12 +94,15 @@ Currently supported methods are:
 - `FixedUpdate`
 - `Update`
 - `LateUpdate`
+- `Finally`
 
 It should be easy enough to extend the source to include other Unity Methods such as OnTriggerEnter, OnMouseDown etc
 
 These methods can be private or public. The methods themselves are all optional, so you only need to provide the ones you actually intend on using. 
 
 Couroutines are supported on Enter and Exit, simply return `IEnumerator`. This can be great way to accommodate animations.
+
+Finally is a special method that always gets called after a state is exited. This is a good place to remove lingering references such as event listeners. Note: this must return void and can't an IEnumerator
 
 ##### Transitions
 
@@ -109,13 +112,20 @@ There is simple support for managing asynchronous state changes with long enter 
 ChangeState(States.MyNextState, StateTransition.Safe);
 ```
 
-The default is `StateTransition.Safe`. This will always allow the current state to finish both it's enter and exit functions before transitioning to any new states.
+The default is `StateTransition.Safe`. This will always allows the current state to finish both it's enter and exit functions before transitioning to any new states.
 
 ```C#
 ChangeState(States.MyNextState, StateTransition.Overwrite);
 ```
 
-`StateMahcine.Overwrite` will cancel any current transitions, and call the next state immediately. This means if you have important code in your state transitions (enter and exit) these might be missed. It's your responsibility to choose how to handle this. 
+`StateMahcine.Overwrite` will cancel any current transitions, and call the next state immediately. This means any code which has yet to run in enter and exit routines will be skipped. If you need to ensure you end on a particular state, the finally function will always be called:
+
+```C#
+void MyCurrentState_Finally()
+{
+    //Reset object to desired configuration
+}
+```
 
 ##### Dependencies
 

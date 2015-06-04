@@ -1,3 +1,7 @@
+v2.4 June 2015
+	*Bugfix: StateTransition.Overwrite is now consistent with expected behviour
+	*Added "Finally" state function that is always called, even if overwrite cancels the exit routine
+
 v2.3 April 2015
 	*Breaking change: Refactored StateMachineBehaviour and StateMachineEngine to StateBehaviour and StateEngine to avoid Unity5 conflicts
 	*Added the concept of StateTransition. Two options: Safe and Overwrite. The default is safe which allows the current coroutine to finish before changing to the next state. 
