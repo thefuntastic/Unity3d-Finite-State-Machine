@@ -123,6 +123,9 @@ namespace MonsterLove.StateMachine
 							targetState.Exit = () => { action(); return null; };
 						}
 						break;
+					case "Finally":
+						targetState.Finally = CreateDelegate<Action>(methods[i], entity);
+						break;
 					case "Update":
 						targetState.Update = CreateDelegate<Action>(methods[i], entity);
 						break;
@@ -201,9 +204,20 @@ namespace MonsterLove.StateMachine
 				case StateTransition.Overwrite:
 					if (currentTransition != null)
 					{
-						var transitionReference = currentTransition;
-						StopCoroutine(transitionReference);
+						StopCoroutine(currentTransition);
 					}
+					if(exitRoutine != null)
+					{
+						StopCoroutine(exitRoutine);
+					}
+					if(enterRoutine != null)
+					{
+						StopCoroutine(enterRoutine);
+					}
+					
+					if (currentState != null) currentState.Finally();
+
+					currentState = null; //We need to set current state to null so that we don't trigger it's exit routine
 					break;
 			}
 
@@ -227,6 +241,8 @@ namespace MonsterLove.StateMachine
 				}
 
 				exitRoutine = null;
+
+				currentState.Finally();
 			}
 
 			currentState = destinationState;

@@ -21,6 +21,7 @@ public class ClassOverwriteLongEnter : StateBehaviour
 	public int oneEnter;
 	public int oneUpdate;
 	public int oneExit;
+	public int oneFinally;
 	public int twoEnter;
 	public bool oneEntered = false;
 	public bool twoEntered = true;
@@ -67,12 +68,13 @@ public class ClassOverwriteLongEnter : StateBehaviour
 	{
 		oneExit++;
 		Debug.Log("One Exit " + Time.time);
+	}
 
-		//if(!oneEntered)
-		//{
-		//	throw new Exception("One exit started before enter is complete");
-		//}
 
+	void One_Finally()
+	{
+		oneFinally++;
+		Debug.Log("One Finally " + Time.time);
 	}
 
 	IEnumerator Two_Enter()
