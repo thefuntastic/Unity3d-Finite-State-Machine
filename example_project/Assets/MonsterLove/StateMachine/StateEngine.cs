@@ -135,6 +135,9 @@ namespace MonsterLove.StateMachine
 					case "FixedUpdate":
 						targetState.FixedUpdate = CreateDelegate<Action>(methods[i], entity);
 						break;
+					//case "OnCollisionEnter":
+					//	targetState.OnCollisionEnter = CreateDelegate<Action<Collision>>(methods[i], entity);
+					//	break;
 				}
 			}
 		}
@@ -302,6 +305,14 @@ namespace MonsterLove.StateMachine
 			}
 		}
 
+		//void OnCollisionEnter(Collision collision)
+		//{
+		//	if(currentState != null && !IsInTransition)
+		//	{
+		//		currentState.OnCollisionEnter(collision);
+		//	}
+		//}
+
 		public static void DoNothing()
 		{
 		}
@@ -352,6 +363,7 @@ namespace MonsterLove.StateMachine
 		public Action Update = StateEngine.DoNothing;
 		public Action LateUpdate = StateEngine.DoNothing;
 		public Action FixedUpdate = StateEngine.DoNothing;
+		//public Action<Collision> OnCollisionEnter = StateEngine.DoNothingCollision;
 
 		public StateMapping(Enum state)
 		{

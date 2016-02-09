@@ -15,6 +15,14 @@ public class ClassDetectOnCollisionEnter : StateBehaviour
 	public bool oneHasCollision = false;
 	public bool twoHasCollision = false;
 
+
+	void Awake()
+	{
+		Initialize<States>();
+		ChangeState(States.One);
+	}
+
+
 	void OnCollisionEnter(Collision collision)
 	{
 		Debug.Log(collision.collider);
