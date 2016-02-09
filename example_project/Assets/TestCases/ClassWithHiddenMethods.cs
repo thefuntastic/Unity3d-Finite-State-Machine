@@ -31,6 +31,12 @@ public class ClassWithHiddenMethods : StateBehaviour
 		
 	}
 
+	//Double Underscors mimics unity hidden metadata functions, should be ignored
+	public void Two__Ignore()
+	{
+
+	}
+
 	public void TestInit () 
 	{
 		Initialize<States>();

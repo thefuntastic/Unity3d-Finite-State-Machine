@@ -2,13 +2,14 @@ using System;
 using MonsterLove.StateMachine;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using UnityTest;
 using Object = UnityEngine.Object;
 
 [TestFixture]
 [Category("State Machine Tests")]
-internal class TestStateEngineInitialization : UnityUnitTest
+internal class TestStateEngineInitialization 
 {
 
 	public enum TestStates
@@ -31,7 +32,7 @@ internal class TestStateEngineInitialization : UnityUnitTest
 	[SetUp]
 	public void Init()
 	{
-		go = CreateGameObject("stateTest");
+		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<StateBehaviour>();
 		engine = go.GetComponent<StateEngine>();
 	}

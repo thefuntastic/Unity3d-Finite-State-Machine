@@ -2,12 +2,13 @@ using System;
 using MonsterLove.StateMachine;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using Object = UnityEngine.Object;
 
 [TestFixture]
 [Category("State Machine Tests")]
-internal class TestBasicTransitions : UnityUnitTest
+internal class TestBasicTransitions 
 {
 
 	private GameObject go;
@@ -17,7 +18,7 @@ internal class TestBasicTransitions : UnityUnitTest
 	[SetUp]
 	public void Init()
 	{
-		go = CreateGameObject("stateTest");
+		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<ClassWithBasicStates>();
 		engine = go.GetComponent<StateEngine>();
 
