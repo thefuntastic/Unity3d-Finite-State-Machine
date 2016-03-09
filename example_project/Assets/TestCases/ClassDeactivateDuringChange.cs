@@ -8,7 +8,7 @@ using MonsterLove.StateMachine;
 /// Test to make sure that when a game object reactivates itself after being set to inactive during a state transition, 
 /// We don't stall when we try and call the next state. 
 /// 
-public class ClassDeactivateDuringChange : StateBehaviour 
+public class ClassDeactivateDuringChange : MonoBehaviour 
 {
 	public enum States
 	{
@@ -26,10 +26,11 @@ public class ClassDeactivateDuringChange : StateBehaviour
 	public int twoEnter;
 	public int threeEnter;
 
+	private StateMachine<States> fsm;
+
 	void Awake()
 	{
-		Initialize<States>();
-		ChangeState(States.One);
+		fsm = GetComponent<StateEngine>().Initialize<States>(this, States.One);
 	}
 
 	
@@ -41,7 +42,7 @@ public class ClassDeactivateDuringChange : StateBehaviour
 
 		yield return new WaitForSeconds(0.5f);
 
-		ChangeState(States.Two);
+		fsm.ChangeState(States.Two);
 
 		Debug.Log("One Complete " + Time.time);
 	}
@@ -81,6 +82,6 @@ public class ClassDeactivateDuringChange : StateBehaviour
 	public void ChangeToThree()
 	{
 		gameObject.SetActive(true);
-		ChangeState(States.Three);
+		fsm.ChangeState(States.Three);
 	}
 }

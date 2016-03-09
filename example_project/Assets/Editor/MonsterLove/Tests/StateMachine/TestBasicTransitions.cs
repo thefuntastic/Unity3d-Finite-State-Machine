@@ -28,7 +28,6 @@ internal class TestBasicTransitions
 		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<ClassWithBasicStates>();
 		engine = go.AddComponent<StateEngine>();
-		fsm = engine.Initialize<States>(behaviour);
 	}
 
 	[TearDown]
@@ -40,6 +39,8 @@ internal class TestBasicTransitions
 	[Test]
 	public void NoTransitions()
 	{
+		fsm = engine.Initialize<States>(behaviour);
+
 		//Goes to start state by default;
 		Assert.AreEqual(1, behaviour.oneStats.enterCount);
 		Assert.AreEqual(0, behaviour.oneStats.updateCount);
@@ -61,6 +62,7 @@ internal class TestBasicTransitions
 	[Test]
 	public void InitialTransition()
 	{
+		fsm = engine.Initialize<States>(behaviour);
 		fsm.ChangeState(States.Two);
 
 		Assert.AreEqual(1, behaviour.oneStats.enterCount);
@@ -83,6 +85,7 @@ internal class TestBasicTransitions
 	[Test]
 	public void IgnoreMultipleTransitions()
 	{
+		fsm = engine.Initialize<States>(behaviour);
 		fsm.ChangeState(States.Two);
 		fsm.ChangeState(States.Two);
 
@@ -102,18 +105,15 @@ internal class TestBasicTransitions
 		Assert.AreEqual(0, behaviour.threeStats.exitCount);
 	}
 
-
 	[Test]
-	public void MultipleTransitions()
+	public void SpecifiedDefault()
 	{
-		fsm.ChangeState(States.One);
+		fsm = engine.Initialize<States>(behaviour, States.Two);
 
-		fsm.ChangeState(States.Two);
-
-		Assert.AreEqual(1, behaviour.oneStats.enterCount);
+		Assert.AreEqual(0, behaviour.oneStats.enterCount);
 		Assert.AreEqual(0, behaviour.oneStats.updateCount);
 		Assert.AreEqual(0, behaviour.oneStats.lateUpdateCount);
-		Assert.AreEqual(1, behaviour.oneStats.exitCount);
+		Assert.AreEqual(0, behaviour.oneStats.exitCount);
 
 		Assert.AreEqual(1, behaviour.twoStats.enterCount);
 		Assert.AreEqual(0, behaviour.twoStats.updateCount);
@@ -125,6 +125,15 @@ internal class TestBasicTransitions
 		Assert.AreEqual(0, behaviour.threeStats.lateUpdateCount);
 		Assert.AreEqual(0, behaviour.threeStats.exitCount);
 
+	}
+
+	[Test]
+	public void MultipleTransitions()
+	{
+		fsm = engine.Initialize<States>(behaviour);
+
+		fsm.ChangeState(States.One);
+		fsm.ChangeState(States.Two);
 		fsm.ChangeState(States.Three);
 
 		Assert.AreEqual(1, behaviour.oneStats.enterCount);

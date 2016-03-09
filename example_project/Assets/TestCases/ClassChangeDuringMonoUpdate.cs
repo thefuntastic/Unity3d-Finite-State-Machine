@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// TEST DESCRIPTION
 /// 
 /// Make sure that when we change during a monobehvaiour function call (ie Update) that we aren't double triggering changes to other states. Two_Enter is called once and only once.
-public class ClassChangeDuringMonoUpdate : StateBehaviour
+public class ClassChangeDuringMonoUpdate : MonoBehaviour
 {
 	public enum States
 	{
@@ -25,14 +25,11 @@ public class ClassChangeDuringMonoUpdate : StateBehaviour
 	public int oneEnter = 0;
 	public int twoEnter = 0;
 
+	private StateMachine<States> fsm;
 
 	void Awake()
 	{
-			
-		Initialize<States>();
-		
-
-		ChangeState(States.One);
+		fsm = GetComponent<StateEngine>().Initialize<States>(this, States.One);
 	}
 	
 	//Unverified assumption: Use timer here in stead of couroutines to prevent the stack depth getting too deeps, as these couroutines will cycle into each other
@@ -45,22 +42,20 @@ public class ClassChangeDuringMonoUpdate : StateBehaviour
 		oneEnter++;
 	}
 
-
 	//Use the mono behaviour update function to change our states. 
 	void Update()
 	{
-		var state = (States) GetState();
+		var state = fsm.State;
 
 		if(state == States.One)
 		{
 			if (Time.time - oneStartTime > oneDuration)
 			{
 				Debug.Log("Changing to Two : " + Time.time);
-				ChangeState(States.Two);
+				fsm.ChangeState(States.Two);
 			}
 		}
 	}
-
 
 	IEnumerator Two_Enter()
 	{
@@ -68,10 +63,5 @@ public class ClassChangeDuringMonoUpdate : StateBehaviour
 		twoEnter++;
 
 		yield return null;
-
 	}
-
-
-
-	
 }

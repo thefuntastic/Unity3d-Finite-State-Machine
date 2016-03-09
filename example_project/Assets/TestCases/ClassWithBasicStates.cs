@@ -4,13 +4,6 @@ using System.Collections;
 
 public class ClassWithBasicStates : MonoBehaviour
 {
-	public enum States
-	{
-		One,
-		Two,
-		Three,
-	}
-
 	public ClassWithBasicStatesTestHelper oneStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper twoStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper threeStats = new ClassWithBasicStatesTestHelper();

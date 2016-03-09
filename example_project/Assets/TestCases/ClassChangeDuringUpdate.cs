@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
-public class ClassChangeDuringUpdate : StateBehaviour
+public class ClassChangeDuringUpdate : MonoBehaviour
 {
 	public enum States
 	{
@@ -22,18 +22,12 @@ public class ClassChangeDuringUpdate : StateBehaviour
 	public int oneEnter = 0;
 	public int twoEnter = 0;
 
-	
+	public StateMachine<States> fsm;
 
 	void Awake()
 	{
-			
-		Initialize<States>();
-		
-
-		ChangeState(States.One);
+		fsm = GetComponent<StateEngine>().Initialize<States>(this, States.One);
 	}
-
-
 
 	//Use timer here in stead of couroutines to prevent the stack depth getting too deeps, as these couroutines will cycle into each other
 	void One_Enter()
@@ -50,7 +44,7 @@ public class ClassChangeDuringUpdate : StateBehaviour
 		if(Time.time - oneStartTime > oneDuration)
 		{
 			Debug.Log("Changing to Two : " + Time.time);
-			ChangeState(States.Two);
+			fsm.ChangeState(States.Two);
 		}
 	}
 
