@@ -20,9 +20,11 @@ public class ClassWithHiddenMethods : StateBehaviour
 		TestInit();
 	}
 
+	string oneTest;
 	public void One_Enter()
 	{
-		
+		//Spawns anon functions <One_Enter>m__80
+		System.Action<string> anonFunc = (str) => { oneTest = str; };
 	}
 
 	//This should cause a warning;
@@ -37,9 +39,16 @@ public class ClassWithHiddenMethods : StateBehaviour
 
 	}
 
+	public void Two_DoSomethingElse()
+	{
+		
+	}
+
 	public void TestInit () 
 	{
 		Initialize<States>();
+
+		ChangeState(States.One);
 	}
 
 	//Causes get_TestProperty & set_TestProperty hidden method names

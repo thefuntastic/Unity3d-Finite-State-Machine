@@ -24,6 +24,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Object = System.Object;
 
@@ -70,6 +71,11 @@ namespace MonsterLove.StateMachine
 
 				//Ignore functions without an underscore
 				if (names.Length <= 1)
+				{
+					continue;
+				}
+
+				if (methods[i].GetCustomAttributes(typeof(CompilerGeneratedAttribute), true).Length != 0)
 				{
 					continue;
 				}
