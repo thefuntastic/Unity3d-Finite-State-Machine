@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class Main : StateBehaviour
+public class Main : MonoBehaviour
 {
 	//Declare which states we'd like use
 	public enum States
@@ -19,44 +19,45 @@ public class Main : StateBehaviour
 
 	private float startHealth;
 
+	private StateMachine<States> fsm;
+
 	private void Awake()
 	{
 		startHealth = health;
 
-		//Initialize State Machine Engine
-		Initialize<States>();
-
-		//Change to our first state
-		ChangeState(States.Init);
+		//Initialize State Machine Engine		
+		fsm = GetComponent<StateEngine>().Initialize<States>(this);
 	}
 
 	void OnGUI()
 	{
-		//Sometimes it is a better pattern to poll state rather than to push state in each Enter/Exit function
-		var state = GetState();
+		//Example of polling state 
+		var state = fsm.State;
 
-		if (state == null) return;
+		GUILayout.BeginArea(new Rect(50,50,120,40));
 
-		GUILayout.BeginArea(new Rect(50,50,80,40));
-
-		if(state.Equals(States.Init) && GUILayout.Button("Start"))
+		if(state == States.Init && GUILayout.Button("Start"))
 		{
-			ChangeState(States.Countdown);
+			fsm.ChangeState(States.Countdown);
 		}
-		if(state.Equals(States.Play))
+		if(state == States.Countdown)
+		{
+			GUILayout.Label("Look at Console");
+		}
+		if(state == States.Play)
 		{
 			if(GUILayout.Button("Force Win"))
 			{
-				ChangeState(States.Win);
+				fsm.ChangeState(States.Win);
 			}
 			
 			GUILayout.Label("Health: " + Mathf.Round(health).ToString());
 		}
-		if(state.Equals(States.Win) || state.Equals(States.Lose))
+		if(state == States.Win || state == States.Lose)
 		{
 			if(GUILayout.Button("Play Again"))
 			{
-				ChangeState(States.Countdown);
+				fsm.ChangeState(States.Countdown);
 			}
 		}
 
@@ -80,7 +81,7 @@ public class Main : StateBehaviour
 		Debug.Log("Starting in 1...");
 		yield return new WaitForSeconds(0.5f);
 
-		ChangeState(States.Play);
+		fsm.ChangeState(States.Play);
 
 	}
 
@@ -92,15 +93,12 @@ public class Main : StateBehaviour
 
 	private void Play_Update()
 	{
-
 		health -= damage * Time.deltaTime;
 	
 		if(health < 0)
 		{
-			ChangeState(States.Lose);
+			fsm.ChangeState(States.Lose);
 		}
-
-		
 	}
 
 	void Play_Exit()

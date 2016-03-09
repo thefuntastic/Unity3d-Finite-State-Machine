@@ -2,7 +2,7 @@ using MonsterLove.StateMachine;
 using UnityEngine;
 using System.Collections;
 
-public class ClassWithBasicStates : StateBehaviour
+public class ClassWithBasicStates : MonoBehaviour
 {
 	public enum States
 	{
@@ -14,11 +14,6 @@ public class ClassWithBasicStates : StateBehaviour
 	public ClassWithBasicStatesTestHelper oneStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper twoStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper threeStats = new ClassWithBasicStatesTestHelper();
-
-	public void Init()
-	{
-		Initialize<States>();
-	}
 
 	void One_Enter()
 	{

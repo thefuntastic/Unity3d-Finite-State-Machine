@@ -37,22 +37,23 @@ namespace MonsterLove.StateMachine
 
 		public Enum GetState()
 		{
-			return stateMachine.GetState();
+			//return stateMachine.GetState();
+			return null;
 		}
 
 		protected void Initialize<T>()
 		{
-			stateMachine.Initialize<T>(this);
+			//stateMachine.Initialize<T>(this);
 		}
 
 		protected virtual void ChangeState(Enum newState)
 		{
-			stateMachine.ChangeState(newState);
+			//stateMachine.ChangeState(newState);
 		}
 
 		protected virtual void ChangeState(Enum newState, StateTransition transition)
 		{
-			stateMachine.ChangeState(newState, transition);
+			//stateMachine.ChangeState(newState, transition);
 		}
 	}
 }

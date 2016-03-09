@@ -10,19 +10,18 @@ using Object = UnityEngine.Object;
 [Category("State Machine Tests")]
 internal class TestBasicTransitions 
 {
-
 	private GameObject go;
 	private ClassWithBasicStates behaviour;
 	private StateEngine engine;
+	private StateMachine<ClassWithBasicStates.States> fsm;
 
 	[SetUp]
 	public void Init()
 	{
 		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<ClassWithBasicStates>();
-		engine = go.GetComponent<StateEngine>();
-
-		behaviour.Init();
+		engine = go.AddComponent<StateEngine>();
+		fsm = engine.Initialize<ClassWithBasicStates.States>(behaviour);
 	}
 
 	[TearDown]
@@ -54,7 +53,7 @@ internal class TestBasicTransitions
 	[Test]
 	public void InitialTransition()
 	{
-		engine.ChangeState(ClassWithBasicStates.States.One);
+		fsm.ChangeState(ClassWithBasicStates.States.One);
 
 		Assert.AreEqual(1, behaviour.oneStats.enterCount);
 		Assert.AreEqual(0, behaviour.oneStats.updateCount);
@@ -75,9 +74,9 @@ internal class TestBasicTransitions
 	[Test]
 	public void MultipleTransitions()
 	{
-		engine.ChangeState(ClassWithBasicStates.States.One);
+		fsm.ChangeState(ClassWithBasicStates.States.One);
 
-		engine.ChangeState(ClassWithBasicStates.States.Two);
+		fsm.ChangeState(ClassWithBasicStates.States.Two);
 
 		Assert.AreEqual(1, behaviour.oneStats.enterCount);
 		Assert.AreEqual(0, behaviour.oneStats.updateCount);
@@ -94,7 +93,7 @@ internal class TestBasicTransitions
 		Assert.AreEqual(0, behaviour.threeStats.lateUpdateCount);
 		Assert.AreEqual(0, behaviour.threeStats.exitCount);
 
-		engine.ChangeState(ClassWithBasicStates.States.Three);
+		fsm.ChangeState(ClassWithBasicStates.States.Three);
 
 		Assert.AreEqual(1, behaviour.oneStats.enterCount);
 		Assert.AreEqual(0, behaviour.oneStats.updateCount);

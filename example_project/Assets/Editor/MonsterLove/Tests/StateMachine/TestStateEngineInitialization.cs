@@ -19,22 +19,21 @@ internal class TestStateEngineInitialization
 		StateEnd,
 	}
 
-	public enum TestTrollStates
+	public enum TestNoDefines
 	{
-		Bogey, 
-		Gremlin, 
 	}
 
 	private GameObject go;
-	private StateBehaviour behaviour;
+	private MonoBehaviour behaviour;
 	private StateEngine engine;
 
 	[SetUp]
 	public void Init()
 	{
 		go = new GameObject("stateTest");
-		behaviour = go.AddComponent<StateBehaviour>();
-		engine = go.GetComponent<StateEngine>();
+		behaviour = go.AddComponent<MonoBehaviour>();
+		engine = go.AddComponent<StateEngine>();
+		
 	}
 
 	[TearDown]
@@ -44,38 +43,20 @@ internal class TestStateEngineInitialization
 	}
 
 	[Test]
-	public void TestBehaviourHasEngine()
-	{
-		Assert.IsNotNull(behaviour.stateMachine);
-	}
-
-	[Test]
-	[ExpectedException]
-	public void TestEnumNotUsedForInit()
-	{
-		engine.Initialize<TestState>(behaviour);
-
-		engine.ChangeState(TestTrollStates.Bogey);
-	}
-
-	[Test]
 	//[ExpectedException]
 	public void TestInitializedTwice()
-	{
-		//Should this be an exception or is this a legimate use case? I'm not sure
-
-		engine.Initialize<TestState>(behaviour);
-
-		engine.Initialize<TestTrollStates>(behaviour);
+	{ 
+		//Should this throw an error? I'm not sure?
+		var fsm = engine.Initialize<TestStates>(behaviour);
+		fsm = engine.Initialize<TestStates>(behaviour);
 	}
 
 	[Test]
 	[ExpectedException]
-	public void TestNotInitialized()
+	public void TestStatesDefined()
 	{
-		engine.ChangeState(TestStates.StateInit);
+		var fsm = engine.Initialize<TestNoDefines>(behaviour);
 	}
-
 }	
 
 
