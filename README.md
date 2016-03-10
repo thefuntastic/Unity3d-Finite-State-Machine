@@ -141,7 +141,11 @@ There are no dependencies, but if you're working with the source files, the test
 
 ## Upgrade Notes - March 2015 - v3.0
 
-Version 3 brings with it a substantial redesign of the library to overcome limitations plaguing the previous iteration (now supports multiple states machines per component, instant Enter & Exit calls, more robust initialization, etc). As such there is a now a more semantic class organisation that allows v3 to live along aside v2 without breaking. However if you wish to upgrade existing code you will need to rewrite all usages as per the instructions above.
+Version 3 brings with it a substantial redesign of the library to overcome limitations plaguing the previous iteration (now supports multiple states machines per component, instant Enter & Exit calls, more robust initialization, etc). As such there is a now a more semantic class organisation with `StateMachine` & `StateMachineRunner`. 
+
+It is recommend you delete the previous package before upgrading, **but this will break your code!** 
+
+To do a complete upgrade you will need to rewrite initialization as per above. You will also need to replace missing `StateEngine` component references with `StateMachineRunner` in the Unity editor. If you want a workaround in order to do a gradual upgrade without breaking changes, you can change the namespace of the `StateMachine` and `StateMachineRunner` and you will be able to use it alongside v2 code until you feel confident enough to do a full upgrade.  
 
 ## Implementation and Shortcomings
 
