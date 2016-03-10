@@ -19,7 +19,7 @@ internal class TestBasicTransitions
 
 	private GameObject go;
 	private ClassWithBasicStates behaviour;
-	private StateEngine engine;
+	private StateMachineRunner engine;
 	private StateMachine<States> fsm;
 
 	[SetUp]
@@ -27,7 +27,7 @@ internal class TestBasicTransitions
 	{
 		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<ClassWithBasicStates>();
-		engine = go.AddComponent<StateEngine>();
+		engine = go.AddComponent<StateMachineRunner>();
 	}
 
 	[TearDown]

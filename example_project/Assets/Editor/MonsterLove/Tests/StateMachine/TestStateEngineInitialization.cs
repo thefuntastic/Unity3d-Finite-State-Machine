@@ -25,14 +25,14 @@ internal class TestStateEngineInitialization
 
 	private GameObject go;
 	private MonoBehaviour behaviour;
-	private StateEngine engine;
+	private StateMachineRunner engine;
 
 	[SetUp]
 	public void Init()
 	{
 		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<MonoBehaviour>();
-		engine = go.AddComponent<StateEngine>();
+		engine = go.AddComponent<StateMachineRunner>();
 		
 	}
 

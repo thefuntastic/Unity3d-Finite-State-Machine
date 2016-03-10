@@ -21,7 +21,7 @@ internal class TestMultipleSubscribers
 	private ClassWithBasicStates behaviour1;
 	private ClassWithBasicStates behaviour2;
 	private ClassWithBasicStates behaviour3;
-	private StateEngine engine;
+	private StateMachineRunner engine;
 	private StateMachine<States> fsm;
 
 	[SetUp]
@@ -31,7 +31,7 @@ internal class TestMultipleSubscribers
 		behaviour1 = go.AddComponent<ClassWithBasicStates>();
 		behaviour2 = go.AddComponent<ClassWithBasicStates>();
 		behaviour3 = go.AddComponent<ClassWithBasicStates>();
-		engine = go.AddComponent<StateEngine>();
+		engine = go.AddComponent<StateMachineRunner>();
 	}
 
 	[TearDown]

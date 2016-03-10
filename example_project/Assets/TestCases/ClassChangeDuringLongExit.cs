@@ -21,7 +21,7 @@ public class ClassChangeDuringLongExit : MonoBehaviour
 
 	void Awake()
 	{
-		fsm = GetComponent<StateEngine>().Initialize<States>(this, States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	private float oneStartTime;

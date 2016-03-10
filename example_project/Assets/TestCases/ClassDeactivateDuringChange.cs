@@ -30,7 +30,7 @@ public class ClassDeactivateDuringChange : MonoBehaviour
 
 	void Awake()
 	{
-		fsm = GetComponent<StateEngine>().Initialize<States>(this, States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	

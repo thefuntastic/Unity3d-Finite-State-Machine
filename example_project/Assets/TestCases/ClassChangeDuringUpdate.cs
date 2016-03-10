@@ -26,7 +26,7 @@ public class ClassChangeDuringUpdate : MonoBehaviour
 
 	void Awake()
 	{
-		fsm = GetComponent<StateEngine>().Initialize<States>(this, States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	//Use timer here in stead of couroutines to prevent the stack depth getting too deeps, as these couroutines will cycle into each other

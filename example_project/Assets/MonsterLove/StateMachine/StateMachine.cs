@@ -35,7 +35,6 @@ namespace MonsterLove.StateMachine
 	{
 		Safe,
 		Overwrite,
-		//Blend,
 	}
 
 	public interface IStateMachine
@@ -49,14 +48,13 @@ namespace MonsterLove.StateMachine
 	{
 		public event Action<T> Changed;
 
-		private StateEngine engine;
+		private StateMachineRunner engine;
 		private MonoBehaviour component;
 
 		private StateMapping currentState;
 		private StateMapping destinationState;
 
 		private Dictionary<object, StateMapping> stateLookup;
-		private Dictionary<string, Delegate> methodLookup;
 
 		private readonly string[] ignoredNames = new[] { "add", "remove", "get", "set" };
 
@@ -66,7 +64,7 @@ namespace MonsterLove.StateMachine
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		public StateMachine(StateEngine engine, MonoBehaviour component)
+		public StateMachine(StateMachineRunner engine, MonoBehaviour component)
 		{
 			this.engine = engine;
 			this.component = component;
@@ -372,8 +370,8 @@ namespace MonsterLove.StateMachine
 		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
 		public static StateMachine<T> Initialize(MonoBehaviour component)
 		{
-			var engine = component.GetComponent<StateEngine>();
-			if (engine == null) engine = component.gameObject.AddComponent<StateEngine>();
+			var engine = component.GetComponent<StateMachineRunner>();
+			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
 			return engine.Initialize<T>(component);
 		}
@@ -386,8 +384,8 @@ namespace MonsterLove.StateMachine
 		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
 		public static StateMachine<T> Initialize(MonoBehaviour component, T startState)
 		{
-			var engine = component.GetComponent<StateEngine>();
-			if (engine == null) engine = component.gameObject.AddComponent<StateEngine>();
+			var engine = component.GetComponent<StateMachineRunner>();
+			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
 			return engine.Initialize<T>(component, startState);
 		}

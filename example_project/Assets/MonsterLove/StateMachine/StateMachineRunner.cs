@@ -30,10 +30,9 @@ using Object = System.Object;
 
 namespace MonsterLove.StateMachine
 {
-	public class StateEngine : MonoBehaviour
+	public class StateMachineRunner : MonoBehaviour
 	{
 		private List<IStateMachine> stateMachineList = new List<IStateMachine>();
-		private Dictionary<IStateMachine, MonoBehaviour> stateMachineLookup = new Dictionary<IStateMachine, MonoBehaviour>();
 
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 
@@ -44,9 +43,6 @@ namespace MonsterLove.StateMachine
 		public StateMachine<T> Initialize<T>(MonoBehaviour component) where T : struct, IConvertible, IComparable
 		{
 			var fsm = new StateMachine<T>(this, component);
-
-			stateMachineLookup = new Dictionary<IStateMachine, MonoBehaviour>();
-			stateMachineLookup.Add(fsm, component);
 
 			stateMachineList.Add(fsm);
 
@@ -74,7 +70,7 @@ namespace MonsterLove.StateMachine
 			for (int i = 0; i < stateMachineList.Count; i++)
 			{
 				var fsm = stateMachineList[i];
-				if(fsm.Component.enabled) fsm.CurrentStateMap.FixedUpdate();
+				if(!fsm.IsInTransition && fsm.Component.enabled) fsm.CurrentStateMap.FixedUpdate();
 			}
 		}
 
@@ -134,18 +130,18 @@ namespace MonsterLove.StateMachine
 		public object state;
 
 		public bool hasEnterRoutine;
-		public Action EnterCall = StateEngine.DoNothing;
-		public Func<IEnumerator> EnterRoutine = StateEngine.DoNothingCoroutine;
+		public Action EnterCall = StateMachineRunner.DoNothing;
+		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
 
 		public bool hasExitRoutine;
-		public Action ExitCall = StateEngine.DoNothing;
-		public Func<IEnumerator> ExitRoutine = StateEngine.DoNothingCoroutine;
+		public Action ExitCall = StateMachineRunner.DoNothing;
+		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
 
-		public Action Finally = StateEngine.DoNothing;
-		public Action Update = StateEngine.DoNothing;
-		public Action LateUpdate = StateEngine.DoNothing;
-		public Action FixedUpdate = StateEngine.DoNothing;
-		public Action<Collision> OnCollisionEnter = StateEngine.DoNothingCollision;
+		public Action Finally = StateMachineRunner.DoNothing;
+		public Action Update = StateMachineRunner.DoNothing;
+		public Action LateUpdate = StateMachineRunner.DoNothing;
+		public Action FixedUpdate = StateMachineRunner.DoNothing;
+		public Action<Collision> OnCollisionEnter = StateMachineRunner.DoNothingCollision;
 
 		public StateMapping(object state)
 		{
