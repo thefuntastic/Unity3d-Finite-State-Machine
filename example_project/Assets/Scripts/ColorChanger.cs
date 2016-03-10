@@ -49,4 +49,13 @@ public class ColorChanger : MonoBehaviour
 
 		fsm.ChangeState(States.Blue);
 	}
+
+	void OnGUI()
+	{
+		if(GUI.Button(new Rect(Screen.width - 150, 50, 100, 20), "Disco Time!"))
+		{
+			fsm.ChangeState(States.Blue);
+		}
+
+	}
 }
