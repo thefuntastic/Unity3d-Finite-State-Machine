@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using MonsterLove.StateMachine;
 
-public class ClassDetectOnCollisionEnter : StateBehaviour
+public class ClassDetectOnCollisionEnter : MonoBehaviour
 {
 	public enum States
 	{
@@ -15,13 +15,12 @@ public class ClassDetectOnCollisionEnter : StateBehaviour
 	public bool oneHasCollision = false;
 	public bool twoHasCollision = false;
 
+	private StateMachine<States> fsm;
 
 	void Awake()
 	{
-		Initialize<States>();
-		ChangeState(States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
-
 
 	void OnCollisionEnter(Collision collision)
 	{

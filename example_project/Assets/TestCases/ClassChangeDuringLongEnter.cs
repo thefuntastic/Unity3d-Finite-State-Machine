@@ -9,7 +9,7 @@ using MonsterLove.StateMachine;
 /// has elapsed without throwing an error. 
 /// 
 /// Testing the correctness of this method of updating is done in ClassChangeDuringMonoUpdate
-public class ClassChangeDuringLongEnter : StateBehaviour 
+public class ClassChangeDuringLongEnter : MonoBehaviour 
 {
 	public enum States
 	{
@@ -28,10 +28,11 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 	private float oneStartTime;
 	private bool oneEntered = false;
 
+	private StateMachine<States> fsm;
+
 	void Awake()
 	{
-		Initialize<States>();
-		ChangeState(States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	
@@ -57,14 +58,14 @@ public class ClassChangeDuringLongEnter : StateBehaviour
 	//Use the mono behaviour update function to change our states outside the state convention 
 	void Update()
 	{
-		var state = (States) GetState();
+		var state = fsm.State;
 
 		if (state == States.One)
 		{
 			if (Time.time - oneStartTime > oneDuration)
 			{
 				Debug.Log("Changing to Two : " + Time.time);
-				ChangeState(States.Two);
+				fsm.ChangeState(States.Two);
 			}
 		}
 	}

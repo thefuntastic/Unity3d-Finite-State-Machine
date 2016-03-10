@@ -2,23 +2,11 @@ using MonsterLove.StateMachine;
 using UnityEngine;
 using System.Collections;
 
-public class ClassWithBasicStates : StateBehaviour
+public class ClassWithBasicStates : MonoBehaviour
 {
-	public enum States
-	{
-		One,
-		Two,
-		Three,
-	}
-
 	public ClassWithBasicStatesTestHelper oneStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper twoStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper threeStats = new ClassWithBasicStatesTestHelper();
-
-	public void Init()
-	{
-		Initialize<States>();
-	}
 
 	void One_Enter()
 	{
@@ -38,6 +26,11 @@ public class ClassWithBasicStates : StateBehaviour
 	void One_Exit()
 	{
 		oneStats.exitCount++;
+	}
+
+	void One_Finally()
+	{
+		oneStats.finallyCount++;
 	}
 
 	void Two_Enter()
@@ -60,6 +53,11 @@ public class ClassWithBasicStates : StateBehaviour
 		twoStats.exitCount++;
 	}
 
+	void Two_Finally()
+	{
+		twoStats.finallyCount++;
+	}
+
 	void Three_Enter()
 	{
 		threeStats.enterCount++;
@@ -79,6 +77,11 @@ public class ClassWithBasicStates : StateBehaviour
 	{
 		threeStats.exitCount++;
 	}
+
+	void Three_Finally()
+	{
+		threeStats.finallyCount++;
+	}
 }
 
 [System.Serializable]
@@ -88,4 +91,5 @@ public class ClassWithBasicStatesTestHelper
 	public int updateCount;
 	public int lateUpdateCount;
 	public int exitCount;
+	public int finallyCount;
 }

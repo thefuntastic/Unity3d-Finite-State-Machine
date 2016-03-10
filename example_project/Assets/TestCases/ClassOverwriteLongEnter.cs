@@ -7,7 +7,7 @@ using MonsterLove.StateMachine;
 /// 
 /// Make sure that when we call overwrite during a long enter routine, Enter is cancelled and the next state is called immediately
 /// without calling the exit function.
-public class ClassOverwriteLongEnter : StateBehaviour 
+public class ClassOverwriteLongEnter : MonoBehaviour 
 {
 	public enum States
 	{
@@ -28,10 +28,11 @@ public class ClassOverwriteLongEnter : StateBehaviour
 
 	private float oneStartTime;
 
+	private StateMachine<States> fsm;
+
 	void Awake()
 	{
-		Initialize<States>();
-		ChangeState(States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	IEnumerator One_Enter()
@@ -52,14 +53,14 @@ public class ClassOverwriteLongEnter : StateBehaviour
 	//Use the mono behaviour update function to change our states outside the state convention 
 	void Update()
 	{
-		var state = (States) GetState();
+		var state = fsm.State;
 
 		if (state == States.One)
 		{
 			if (Time.time - oneStartTime > oneDuration)
 			{
 				Debug.Log("Changing to Two : " + Time.time);
-				ChangeState(States.Two, StateTransition.Overwrite);
+				fsm.ChangeState(States.Two, StateTransition.Overwrite);
 			}
 		}
 	}

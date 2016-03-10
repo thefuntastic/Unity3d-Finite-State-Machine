@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class ClassChangeDuringLongExit : StateBehaviour 
+public class ClassChangeDuringLongExit : MonoBehaviour 
 {
 	public enum States
 	{
@@ -17,10 +17,11 @@ public class ClassChangeDuringLongExit : StateBehaviour
 	public int oneFinally;
 	public int twoEnter;
 
+	private StateMachine<States> fsm;
+
 	void Awake()
 	{
-		Initialize<States>();
-		ChangeState(States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	private float oneStartTime;
@@ -50,7 +51,7 @@ public class ClassChangeDuringLongExit : StateBehaviour
 		if(Time.time - oneStartTime > oneDuration)
 		{
 			Debug.Log("Changing to two " + Time.time);
-			ChangeState(States.Two);
+			fsm.ChangeState(States.Two);
 		}
 		
 	}
@@ -60,7 +61,7 @@ public class ClassChangeDuringLongExit : StateBehaviour
 		oneExit++;
 		Debug.Log("One Exit " + Time.time);
 
-		//This should not cause the ChangeState() from update to double fire
+		//This should not cause the fsm.ChangeState() from update to double fire
 		yield return null;
 
 		//This should not cause it to triple fire

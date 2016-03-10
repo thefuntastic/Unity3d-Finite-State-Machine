@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class ClassChangeFromLongExit : StateBehaviour 
+public class ClassChangeFromLongExit : MonoBehaviour 
 {
 	public enum States
 	{
@@ -17,10 +17,11 @@ public class ClassChangeFromLongExit : StateBehaviour
 	public int twoEnter;
 	public bool exitComplete;
 
+	private StateMachine<States> fsm;
+
 	void Awake()
 	{
-		Initialize<States>();
-		ChangeState(States.One);
+		fsm = GetComponent<StateMachineRunner>().Initialize<States>(this, States.One);
 	}
 
 	private float oneStartTime;
@@ -42,7 +43,7 @@ public class ClassChangeFromLongExit : StateBehaviour
 		if(Time.time - oneStartTime > oneDuration)
 		{
 			Debug.Log("Changing to two " + Time.time);
-			ChangeState(States.Two);
+			fsm.ChangeState(States.Two);
 		}
 		
 	}
@@ -68,7 +69,7 @@ public class ClassChangeFromLongExit : StateBehaviour
 	IEnumerator DelayedChange()
 	{
 		yield return new WaitForSeconds(oneDuration);
-		ChangeState(States.Two);
+		fsm.ChangeState(States.Two);
 	}
 
 	IEnumerator Two_Enter()
