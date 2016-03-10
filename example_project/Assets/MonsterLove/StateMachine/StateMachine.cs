@@ -65,7 +65,7 @@ namespace MonsterLove.StateMachine
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		public StateMachine(StateEngine engine, MonoBehaviour component, T startState)
+		public StateMachine(StateEngine engine, MonoBehaviour component)
 		{
 			this.engine = engine;
 			this.component = component;
@@ -120,23 +120,25 @@ namespace MonsterLove.StateMachine
 					case "Enter":
 						if (methods[i].ReturnType == typeof(IEnumerator))
 						{
-							targetState.Enter = CreateDelegate<Func<IEnumerator>>(methods[i], component);
+							targetState.hasEnterRoutine = true;
+							targetState.EnterRoutine = CreateDelegate<Func<IEnumerator>>(methods[i], component);
 						}
 						else
 						{
-							var action = CreateDelegate<Action>(methods[i], component);
-							targetState.Enter = () => { action(); return null; };
+							targetState.hasEnterRoutine = false;
+							targetState.EnterCall = CreateDelegate<Action>(methods[i], component);
 						}
 						break;
 					case "Exit":
 						if (methods[i].ReturnType == typeof(IEnumerator))
 						{
-							targetState.Exit = CreateDelegate<Func<IEnumerator>>(methods[i], component);
+							targetState.hasExitRoutine = true;
+							targetState.ExitRoutine = CreateDelegate<Func<IEnumerator>>(methods[i], component);
 						}
 						else
 						{
-							var action = CreateDelegate<Action>(methods[i], component);
-							targetState.Exit = () => { action(); return null; };
+							targetState.hasExitRoutine = false;
+							targetState.ExitCall = CreateDelegate<Action>(methods[i], component);
 						}
 						break;
 					case "Finally":
@@ -157,7 +159,8 @@ namespace MonsterLove.StateMachine
 				}
 			}
 
-			ChangeState(startState);
+			//Create nil state mapping
+			currentState = new StateMapping(null);
 		}
 
 		private V CreateDelegate<V>(MethodInfo method, Object target) where V : class
@@ -247,9 +250,31 @@ namespace MonsterLove.StateMachine
 					break;
 			}
 
-			isInTransition = true;
-			currentTransition = ChangeToNewStateRoutine(nextState);
-			engine.StartCoroutine(currentTransition);
+
+			if ( (currentState != null && currentState.hasExitRoutine) || nextState.hasEnterRoutine)
+			{
+				isInTransition = true;
+				currentTransition = ChangeToNewStateRoutine(nextState);
+				engine.StartCoroutine(currentTransition);
+			}
+			else //Same frame transition, no coroutines are present
+			{
+				if (currentState != null)
+				{
+					currentState.ExitCall();
+					currentState.Finally();
+				}
+				currentState = nextState;
+				if (currentState != null)
+				{
+					currentState.EnterCall();
+					if (Changed != null)
+					{
+						Changed((T) currentState.state);
+					}
+				}
+				isInTransition = false;
+			}
 		}
 
 		private IEnumerator ChangeToNewStateRoutine(StateMapping newState)
@@ -258,14 +283,21 @@ namespace MonsterLove.StateMachine
 
 			if (currentState != null)
 			{
-				exitRoutine = currentState.Exit();
-
-				if (exitRoutine != null)
+				if (currentState.hasExitRoutine)
 				{
-					yield return engine.StartCoroutine(exitRoutine);
-				}
+					exitRoutine = currentState.ExitRoutine();
 
-				exitRoutine = null;
+					if (exitRoutine != null)
+					{
+						yield return engine.StartCoroutine(exitRoutine);
+					}
+
+					exitRoutine = null;
+				}
+				else
+				{
+					currentState.ExitCall();
+				}
 
 				currentState.Finally();
 			}
@@ -274,14 +306,21 @@ namespace MonsterLove.StateMachine
 
 			if (currentState != null)
 			{
-				enterRoutine = currentState.Enter();
-
-				if (enterRoutine != null)
+				if (currentState.hasEnterRoutine)
 				{
-					yield return engine.StartCoroutine(enterRoutine);
-				}
+					enterRoutine = currentState.EnterRoutine();
 
-				enterRoutine = null;
+					if (enterRoutine != null)
+					{
+						yield return engine.StartCoroutine(enterRoutine);
+					}
+
+					enterRoutine = null;
+				}
+				else
+				{
+					currentState.EnterCall();
+				}
 
 				//Broadcast change only after enter transition has begun. 
 				if (Changed != null)

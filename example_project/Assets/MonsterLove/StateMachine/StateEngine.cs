@@ -36,14 +36,21 @@ namespace MonsterLove.StateMachine
 		private Dictionary<IStateMachine, MonoBehaviour> stateMachineLookup = new Dictionary<IStateMachine, MonoBehaviour>();
 
 		/// <summary>
-		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. Will automatically transition to the defualt state
+		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 
 		/// </summary>
 		/// <typeparam name="T">An Enum listing different state transitions</typeparam>
 		/// <param name="component">The component whose state will be managed</param>
 		/// <returns></returns>
 		public StateMachine<T> Initialize<T>(MonoBehaviour component) where T : struct, IConvertible, IComparable
 		{
-			return Initialize<T>(component, default(T));
+			var fsm = new StateMachine<T>(this, component);
+
+			stateMachineLookup = new Dictionary<IStateMachine, MonoBehaviour>();
+			stateMachineLookup.Add(fsm, component);
+
+			stateMachineList.Add(fsm);
+
+			return fsm;
 		}
 
 		/// <summary>
@@ -55,12 +62,9 @@ namespace MonsterLove.StateMachine
 		/// <returns></returns>
 		public StateMachine<T> Initialize<T>(MonoBehaviour component, T startState) where T : struct, IConvertible, IComparable
 		{
-			var fsm = new StateMachine<T>(this, component, startState);
+			var fsm = Initialize<T>(component);
 
-			stateMachineLookup = new Dictionary<IStateMachine, MonoBehaviour>();
-			stateMachineLookup.Add(fsm, component);
-
-			stateMachineList.Add(fsm);
+			fsm.ChangeState(startState);
 
 			return fsm;
 		}
@@ -128,8 +132,14 @@ namespace MonsterLove.StateMachine
 	{
 		public object state;
 
-		public Func<IEnumerator> Enter = StateEngine.DoNothingCoroutine;
-		public Func<IEnumerator> Exit = StateEngine.DoNothingCoroutine;
+		public bool hasEnterRoutine;
+		public Action EnterCall = StateEngine.DoNothing;
+		public Func<IEnumerator> EnterRoutine = StateEngine.DoNothingCoroutine;
+
+		public bool hasExitRoutine;
+		public Action ExitCall = StateEngine.DoNothing;
+		public Func<IEnumerator> ExitRoutine = StateEngine.DoNothingCoroutine;
+
 		public Action Finally = StateEngine.DoNothing;
 		public Action Update = StateEngine.DoNothing;
 		public Action LateUpdate = StateEngine.DoNothing;

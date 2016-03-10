@@ -28,6 +28,11 @@ public class ClassWithBasicStates : MonoBehaviour
 		oneStats.exitCount++;
 	}
 
+	void One_Finally()
+	{
+		oneStats.finallyCount++;
+	}
+
 	void Two_Enter()
 	{
 		twoStats.enterCount++;
@@ -46,6 +51,11 @@ public class ClassWithBasicStates : MonoBehaviour
 	void Two_Exit()
 	{
 		twoStats.exitCount++;
+	}
+
+	void Two_Finally()
+	{
+		twoStats.finallyCount++;
 	}
 
 	void Three_Enter()
@@ -67,6 +77,11 @@ public class ClassWithBasicStates : MonoBehaviour
 	{
 		threeStats.exitCount++;
 	}
+
+	void Three_Finally()
+	{
+		threeStats.finallyCount++;
+	}
 }
 
 [System.Serializable]
@@ -76,4 +91,5 @@ public class ClassWithBasicStatesTestHelper
 	public int updateCount;
 	public int lateUpdateCount;
 	public int exitCount;
+	public int finallyCount;
 }
