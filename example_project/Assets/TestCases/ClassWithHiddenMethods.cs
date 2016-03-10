@@ -1,9 +1,9 @@
-	using System;
+using System;
 using UnityEngine;
 using System.Collections;
 using MonsterLove.StateMachine;
 
-public class ClassWithHiddenMethods : StateBehaviour 
+public class ClassWithHiddenMethods : MonoBehaviour 
 {
 	//Causes add_MyEvent & remove_MyEvent hidden method names
 	public event Action MyEvent;
@@ -46,9 +46,7 @@ public class ClassWithHiddenMethods : StateBehaviour
 
 	public void TestInit () 
 	{
-		Initialize<States>();
-
-		ChangeState(States.One);
+		var fsm = StateMachine<States>.Initialize(this);
 	}
 
 	//Causes get_TestProperty & set_TestProperty hidden method names
