@@ -40,6 +40,7 @@ namespace MonsterLove.StateMachine
 
 	public interface IStateMachine
 	{
+		MonoBehaviour Component { get; }
 		StateMapping CurrentStateMap { get; }
 		bool IsInTransition { get; }
 	}
@@ -359,7 +360,7 @@ namespace MonsterLove.StateMachine
 
 		public MonoBehaviour Component
 		{
-			get { return Component; }
+			get { return component; }
 		}
 
 		//Static Methods
