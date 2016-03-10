@@ -26,7 +26,7 @@ public class Main : MonoBehaviour
 		startHealth = health;
 
 		//Initialize State Machine Engine		
-		fsm = GetComponent<StateEngine>().Initialize<States>(this);
+		fsm = StateMachine<States>.Initialize(this);
 	}
 
 	void OnGUI()

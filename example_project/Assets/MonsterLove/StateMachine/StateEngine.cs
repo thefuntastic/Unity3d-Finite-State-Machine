@@ -414,6 +414,36 @@ namespace MonsterLove.StateMachine
 		{
 			get { return Component; }
 		}
+
+		//Static Methods
+
+		/// <summary>
+		/// Inspects a MonoBehaviour for state methods as definied by the supplied Enum, and returns a stateMachine instance used to trasition states. Start state will be the first state listed by the Enum
+		/// </summary>
+		/// <param name="component">The component with defined state methods</param>
+		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
+		public static StateMachine<T> Initialize (MonoBehaviour component) 
+		{
+			var engine = component.GetComponent<StateEngine>();
+			if (engine == null) engine = component.gameObject.AddComponent<StateEngine>();
+
+			return engine.Initialize<T>(component);
+		}
+
+		/// <summary>
+		/// Inspects a MonoBehaviour for state methods as definied by the supplied Enum, and returns a stateMachine instance used to trasition states. 
+		/// </summary>
+		/// <param name="component">The component with defined state methods</param>
+		/// <param name="startState">The default starting state</param>
+		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
+		public static StateMachine<T> Initialize(MonoBehaviour component, T startState) 
+		{
+			var engine = component.GetComponent<StateEngine>();
+			if (engine == null) engine = component.gameObject.AddComponent<StateEngine>();
+
+			return engine.Initialize<T>(component, startState);
+		}
+
 	}
 
 	public class StateMapping

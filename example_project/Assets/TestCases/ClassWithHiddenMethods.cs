@@ -27,7 +27,7 @@ public class ClassWithHiddenMethods : StateBehaviour
 		System.Action<string> anonFunc = (str) => { oneTest = str; };
 	}
 
-	//This should cause a warning;
+	//Now that warning code has been removed this will no longer cause an error
 	public void Twoo_Enter()
 	{
 		
