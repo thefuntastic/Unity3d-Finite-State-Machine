@@ -244,10 +244,7 @@ namespace MonsterLove.StateMachine
 						engine.StopCoroutine(enterRoutine);
 					}
 
-					if (currentState != null) currentState.Finally();
-
-					lastState = currentState;
-					currentState = null; //We need to set current state to null so that we don't trigger it's exit routine
+					//Note: if we are currently in an EnterRoutine and Exit is also a routine, this will be skipped in ChangeToNewStateRoutine()
 					break;
 			}
 
@@ -255,7 +252,7 @@ namespace MonsterLove.StateMachine
 			if ((currentState != null && currentState.hasExitRoutine) || nextState.hasEnterRoutine)
 			{
 				isInTransition = true;
-				currentTransition = ChangeToNewStateRoutine(nextState);
+				currentTransition = ChangeToNewStateRoutine(nextState, transition);
 				engine.StartCoroutine(currentTransition);
 			}
 			else //Same frame transition, no coroutines are present
@@ -266,7 +263,7 @@ namespace MonsterLove.StateMachine
 					currentState.Finally();
 				}
 
-				lastState = currentState ?? lastState; //Overwrite can make our current state null
+				lastState = currentState;
 				currentState = nextState;
 				if (currentState != null)
 				{
@@ -280,7 +277,7 @@ namespace MonsterLove.StateMachine
 			}
 		}
 
-		private IEnumerator ChangeToNewStateRoutine(StateMapping newState)
+		private IEnumerator ChangeToNewStateRoutine(StateMapping newState, StateTransition transition)
 		{
 			destinationState = newState; //Chache this so that we can overwrite it and hijack a transition
 
@@ -290,7 +287,7 @@ namespace MonsterLove.StateMachine
 				{
 					exitRoutine = currentState.ExitRoutine();
 
-					if (exitRoutine != null)
+					if (exitRoutine != null && transition != StateTransition.Overwrite) //Don't wait for exit if we are overwriting
 					{
 						yield return engine.StartCoroutine(exitRoutine);
 					}
@@ -305,7 +302,7 @@ namespace MonsterLove.StateMachine
 				currentState.Finally();
 			}
 
-			lastState = currentState ?? lastState; //Overwrite can make our current state null 
+			lastState = currentState;
 			currentState = destinationState;
 
 			if (currentState != null)
