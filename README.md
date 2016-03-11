@@ -59,7 +59,7 @@ You can call this at any time, but generally `Awake()` is a safe choice.
 
 ##### You are now ready to manage state by simply calling `ChangeState()`
 ```C#
-fsm.ChangeState(States.Play);
+fsm.ChangeState(States.Init);
 ```
 
 ##### State callbacks are defined by underscore convention ( `StateName_Method` )

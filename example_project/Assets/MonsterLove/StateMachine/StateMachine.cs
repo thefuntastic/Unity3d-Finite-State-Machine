@@ -51,6 +51,7 @@ namespace MonsterLove.StateMachine
 		private StateMachineRunner engine;
 		private MonoBehaviour component;
 
+		private StateMapping lastState;
 		private StateMapping currentState;
 		private StateMapping destinationState;
 
@@ -245,12 +246,13 @@ namespace MonsterLove.StateMachine
 
 					if (currentState != null) currentState.Finally();
 
+					lastState = currentState;
 					currentState = null; //We need to set current state to null so that we don't trigger it's exit routine
 					break;
 			}
 
 
-			if ( (currentState != null && currentState.hasExitRoutine) || nextState.hasEnterRoutine)
+			if ((currentState != null && currentState.hasExitRoutine) || nextState.hasEnterRoutine)
 			{
 				isInTransition = true;
 				currentTransition = ChangeToNewStateRoutine(nextState);
@@ -263,6 +265,8 @@ namespace MonsterLove.StateMachine
 					currentState.ExitCall();
 					currentState.Finally();
 				}
+
+				lastState = currentState ?? lastState; //Overwrite can make our current state null
 				currentState = nextState;
 				if (currentState != null)
 				{
@@ -301,6 +305,7 @@ namespace MonsterLove.StateMachine
 				currentState.Finally();
 			}
 
+			lastState = currentState ?? lastState; //Overwrite can make our current state null 
 			currentState = destinationState;
 
 			if (currentState != null)
@@ -341,6 +346,16 @@ namespace MonsterLove.StateMachine
 			ChangeState((T) nextState.state);
 		}
 
+		public T LastState
+		{
+			get
+			{
+				if (lastState == null) return default(T);
+
+				return (T) lastState.state;
+			}
+		}
+
 		public T State
 		{
 			get { return (T) currentState.state; }
@@ -364,7 +379,7 @@ namespace MonsterLove.StateMachine
 		//Static Methods
 
 		/// <summary>
-		/// Inspects a MonoBehaviour for state methods as definied by the supplied Enum, and returns a stateMachine instance used to trasition states. Start state will be the first state listed by the Enum
+		/// Inspects a MonoBehaviour for state methods as definied by the supplied Enum, and returns a stateMachine instance used to trasition states.
 		/// </summary>
 		/// <param name="component">The component with defined state methods</param>
 		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
