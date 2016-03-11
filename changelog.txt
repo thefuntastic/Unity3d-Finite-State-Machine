@@ -1,9 +1,12 @@
+v3.1 March 2016
+	*Fixing edge cases where non coroutine Exit fucntions wouldn't be called if StateTrasition.Overwrite used
+
 v3.0 March 2016
 	*Multiple state machines per game object now supported
 	*Can now reference stateMachine.State without having to cast the result to an enum
 	*Enter and Exit methods that aren't corouintes are now executed on the same frame they are called - solves many timing issues
 	*StateMachine is assigned to an instance variable rather than inheritance. Means your MonoBehaviour can inherit from other classes and allows multiple state machines per object
-	*Classes are now StateMachine and StateMachineRunner. Is more semantic and provides a gentle upgrade path that won't clash wiht the previous implementation
+	*Classes are now StateMachine and StateMachineRunner. Is more semantic and provides a gentle upgrade path that won't clash with the previous implementation
 	*StateManchine<States>.Initialize(component) syntax sugar to make initialization more friendly
 	*Enhanced test coverage
 	*Removed Method Name warnings as this was just an un-ending source of grief 
