@@ -139,7 +139,7 @@ void MyCurrentState_Finally()
 
 There are no dependencies, but if you're working with the source files, the tests rely on the UnityTestTools package which can be downloaded from the Asset Store. These are non-essential, only work in the editor, and can be deleted if you so choose. 
 
-## Upgrade Notes - March 2015 - v3.0
+## Upgrade Notes - March 2016 - v3.0
 
 Version 3 brings with it a substantial redesign of the library to overcome limitations plaguing the previous iteration (now supports multiple states machines per component, instant Enter & Exit calls, more robust initialization, etc). As such there is a now a more semantic class organisation with `StateMachine` & `StateMachineRunner`. 
 
