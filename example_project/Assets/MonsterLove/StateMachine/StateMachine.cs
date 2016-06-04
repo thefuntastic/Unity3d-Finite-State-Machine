@@ -35,6 +35,8 @@ namespace MonsterLove.StateMachine
 	{
 		Safe,
 		Overwrite,
+		ForceSafe,
+		ForceOverwrite
 	}
 
 	public interface IStateMachine
@@ -194,7 +196,15 @@ namespace MonsterLove.StateMachine
 
 			var nextState = stateLookup[newState];
 
-			if (currentState == nextState) return;
+			if (transition == StateTransition.ForceOverwrite)
+			{
+				transition = StateTransition.Overwrite;
+			}
+			else if (transition == StateTransition.ForceSafe)
+			{
+				transition = StateTransition.Safe;
+			}
+			else if (currentState == nextState) { return; }
 
 			//Cancel any queued changes.
 			if (queuedChange != null)
