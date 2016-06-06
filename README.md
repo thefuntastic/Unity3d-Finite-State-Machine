@@ -19,7 +19,7 @@ An example project is included (Unity 5.0) to show the State Machine in action.
 
 To use the state machine you need a few simple steps
 
-##### Your monobehivour should inherit from StateBeviour
+##### Include the StateMachine package
 
 ```C#
 using MonsterLove.StateMachine; //Remember the using statement before the class declaration
@@ -110,7 +110,7 @@ These methods can be private or public. The methods themselves are all optional,
 
 Couroutines are supported on Enter and Exit, simply return `IEnumerator`. This can be great way to accommodate animations. Note: `FixedUpdate`, `Update` and `LateUpdate` calls won't execute while an Enter or Exit routine is running.
 
-Finally is a special method guaranteed to be called after a state has exited. This is a good place to perform any hygenie operations such as removing event listeners. Note: Finally does not support coroutines.
+Finally is a special method guaranteed to be called after a state has exited. This is a good place to perform any hygiene operations such as removing event listeners. Note: Finally does not support coroutines.
 
 ##### Transitions
 
