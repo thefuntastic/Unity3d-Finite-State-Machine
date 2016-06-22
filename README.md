@@ -137,7 +137,7 @@ void MyCurrentState_Finally()
 
 ##### Dependencies
 
-There are no dependencies, but if you're working with the source files, the tests rely on the UnityTestTools package which can be downloaded from the Asset Store. These are non-essential, only work in the editor, and can be deleted if you so choose. 
+There are no dependencies, but if you're working with the source files, the tests rely on the UnityTestTools package. These are non-essential, only work in the editor, and can be deleted if you so choose. 
 
 ## Upgrade Notes - March 2016 - v3.0
 
