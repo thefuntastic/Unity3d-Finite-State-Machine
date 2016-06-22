@@ -8,77 +8,77 @@ public class ClassWithBasicStates : MonoBehaviour
 	public ClassWithBasicStatesTestHelper twoStats = new ClassWithBasicStatesTestHelper();
 	public ClassWithBasicStatesTestHelper threeStats = new ClassWithBasicStatesTestHelper();
 
-	void One_Enter()
+	protected void One_Enter()
 	{
 		oneStats.enterCount++;
 	}
 
-	void One_Update()
+	protected void One_Update()
 	{
 		oneStats.updateCount++;
 	}
 
-	void One_LateUpdate()
+	protected void One_LateUpdate()
 	{
 		oneStats.lateUpdateCount++;
 	}
 
-	void One_Exit()
+	protected void One_Exit()
 	{
 		oneStats.exitCount++;
 	}
 
-	void One_Finally()
+	protected void One_Finally()
 	{
 		oneStats.finallyCount++;
 	}
 
-	void Two_Enter()
+	protected void Two_Enter()
 	{
 		twoStats.enterCount++;
 	}
 
-	void Two_Update()
+	protected void Two_Update()
 	{
 		twoStats.updateCount++;
 	}
 
-	void Two_LateUpdate()
+	protected void Two_LateUpdate()
 	{
 		twoStats.lateUpdateCount++;
 	}
 
-	void Two_Exit()
+	protected void Two_Exit()
 	{
 		twoStats.exitCount++;
 	}
 
-	void Two_Finally()
+	protected void Two_Finally()
 	{
 		twoStats.finallyCount++;
 	}
 
-	void Three_Enter()
+	protected void Three_Enter()
 	{
 		threeStats.enterCount++;
 	}
 
-	void Three_Update()
+	protected void Three_Update()
 	{
 		threeStats.updateCount++;
 	}
 
-	void Three_LateUpdate()
+	protected void Three_LateUpdate()
 	{
 		threeStats.lateUpdateCount++;
 	}
 
-	void Three_Exit()
+	protected void Three_Exit()
 	{
 		threeStats.exitCount++;
 	}
 
-	void Three_Finally()
+	protected void Three_Finally()
 	{
 		threeStats.finallyCount++;
 	}
