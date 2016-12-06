@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016 Made With Mosnter Love (Pty) Ltd
+ * Copyright (c) 2016 Made With Monster Love (Pty) Ltd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to 
