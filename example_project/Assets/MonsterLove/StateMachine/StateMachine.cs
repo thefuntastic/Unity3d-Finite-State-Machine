@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016 Made With Monster Love (Pty) Ltd
+ * Copyright (c) 2016 Made With Mosnter Love (Pty) Ltd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to 
@@ -102,10 +102,13 @@ namespace MonsterLove.StateMachine
 					continue;
 				}
 
+				var stateName = string.Join("_", names, 0, names.Length - 1);
+				var eventName = names[names.Length - 1];
+
 				Enum key;
 				try
 				{
-					key = (Enum) Enum.Parse(typeof(T), names[0]);
+					key = (Enum) Enum.Parse(typeof(T), stateName);
 				}
 				catch (ArgumentException)
 				{
@@ -115,7 +118,7 @@ namespace MonsterLove.StateMachine
 
 				var targetState = stateLookup[key];
 
-				switch (names[1])
+				switch(eventName)
 				{
 					case "Enter":
 						if (methods[i].ReturnType == typeof(IEnumerator))
