@@ -106,6 +106,30 @@ namespace MonsterLove.StateMachine
 		//	}
 		//}
 
+		void OnTriggerEnter(Collider collider)
+		{
+			for (int i = 0; i < stateMachineList.Count; i++)
+			{
+				var fsm = stateMachineList[i];
+				if (!fsm.IsInTransition && fsm.Component.enabled)
+				{
+					fsm.CurrentStateMap.OnTriggerEnter(collider);
+				}
+			}
+		}
+
+		void OnTriggerExit(Collider collider)
+		{
+			for (int i = 0; i < stateMachineList.Count; i++)
+			{
+				var fsm = stateMachineList[i];
+				if (!fsm.IsInTransition && fsm.Component.enabled)
+				{
+					fsm.CurrentStateMap.OnTriggerExit(collider);
+				}
+			}
+		}
+
 		public static void DoNothing()
 		{
 		}
@@ -142,6 +166,8 @@ namespace MonsterLove.StateMachine
 		public Action LateUpdate = StateMachineRunner.DoNothing;
 		public Action FixedUpdate = StateMachineRunner.DoNothing;
 		public Action<Collision> OnCollisionEnter = StateMachineRunner.DoNothingCollision;
+		public Action<Collider> OnTriggerEnter = StateMachineRunner.DoNothingCollider;
+		public Action<Collider> OnTriggerExit = StateMachineRunner.DoNothingCollider;
 
 		public StateMapping(object state)
 		{

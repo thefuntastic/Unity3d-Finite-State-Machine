@@ -103,8 +103,10 @@ Currently supported methods are:
 - `Update`
 - `LateUpdate`
 - `Finally`
+- `OnTriggerEnter`
+- `OnTriggerExit`
 
-It should be easy enough to extend the source to include other Unity Methods such as OnTriggerEnter, OnMouseDown etc
+It should be easy enough to extend the source to include other Unity Methods such as OnMouseDown.
 
 These methods can be private or public. The methods themselves are all optional, so you only need to provide the ones you actually intend on using. 
 

@@ -156,6 +156,12 @@ namespace MonsterLove.StateMachine
 					case "OnCollisionEnter":
 						targetState.OnCollisionEnter = CreateDelegate<Action<Collision>>(methods[i], component);
 						break;
+					case "OnTriggerEnter":
+						targetState.OnTriggerEnter = CreateDelegate<Action<Collider>>(methods[i], component);
+						break;
+					case "OnTriggerExit":
+						targetState.OnTriggerExit = CreateDelegate<Action<Collider>>(methods[i], component);
+						break;
 				}
 			}
 
