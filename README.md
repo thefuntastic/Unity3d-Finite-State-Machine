@@ -170,7 +170,7 @@ MIT License
 
 ## Notes
 
-This is state machine is used extensively on the [Made With Monster Love](http://www.madewithmonsterlove.com) title [Cadence](http://www.playcadence.com), a puzzle game about making music.  
+This is state machine is used extensively on the [Made With Monster Love](http://www.madewithmonsterlove.com) title [Cadence](http://store.steampowered.com/app/362800/Cadence/), a puzzle game about making music.  
 
 This library owes its origins to the state machine found at http://unitygems.com/ (available via [The Internet Archive](http://web.archive.org/web/20140902150909/http://unitygems.com/fsm1/) as of Nov 2014). The original project, however, had many short comings that made usage difficult. Adhering to the principle that a library should do one thing really well, what we have now is perhaps the easiest and most straight forward State Machine in existence for Unity.
 
