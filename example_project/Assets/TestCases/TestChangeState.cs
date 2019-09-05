@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using MonsterLove.StateMachine;
 using NUnit.Framework;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Random = UnityEngine.Random;
 
 namespace Tests
 {
@@ -30,6 +27,12 @@ namespace Tests
             behaviour = go.AddComponent<StateClass>();
             
             fsm = StateMachine<States>.Initialize(behaviour);
+        }
+
+        [TearDown]
+        public void Kill()
+        {
+            Object.Destroy(go);
         }
         
         [UnityTest]

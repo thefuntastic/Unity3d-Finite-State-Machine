@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace Tests
@@ -22,175 +23,251 @@ namespace Tests
         private GameObject go;
         private StateClass behaviour;
         private StateMachine<States> fsm;
+        private float duration = 0.5f;
 
         [SetUp]
         public void Init()
         {
             go = new GameObject();
             behaviour = go.AddComponent<StateClass>();
-            behaviour.longDuration = 1;
+            behaviour.duration = duration;
             
             fsm = StateMachine<States>.Initialize(behaviour);
+        }
+        
+        [TearDown]
+        public void Kill()
+        {
+            Object.Destroy(go);
         }
         
         [UnityTest]
         public IEnumerator TestAsyncEnterExit()
         {
-            // 2
-            
-            fsm.ChangeState(States.Two, StateTransition.Safe);
-            
-            Assert.AreEqual(0, behaviour.twoExit);
-            Assert.AreEqual(0, behaviour.oneEnter);
-            
-            // 2\__/1
+            // 1
             
             fsm.ChangeState(States.One, StateTransition.Safe);
             
-            Assert.AreEqual(0, behaviour.twoExit);
-            Assert.AreEqual(0, behaviour.oneEnter);
-            
-            yield return new WaitForSeconds(behaviour.longDuration * 2 + 0.1f);
-            
-            Assert.AreEqual(1, behaviour.twoExit);
             Assert.AreEqual(1, behaviour.oneEnter);
+            Assert.AreEqual(0, behaviour.oneExit);
+            Assert.AreEqual(0, behaviour.twoEnter);
+            
+            // 1\__/2
+            
+            fsm.ChangeState(States.Two, StateTransition.Safe);
+            
+            Assert.AreEqual(1, behaviour.oneEnter);
+            Assert.AreEqual(0, behaviour.oneExit);
+            Assert.AreEqual(0, behaviour.twoEnter);
+            
+            yield return new WaitForSeconds(duration + duration + 0.2f);
+            
+            Assert.AreEqual(1, behaviour.oneEnter);
+            Assert.AreEqual(1, behaviour.oneExit);
+            Assert.AreEqual(1, behaviour.twoEnter);
         }
 
         [UnityTest]
         public IEnumerator TestChangeDuringAsyncEnter()
         {
-            // /1
-            fsm.ChangeState(States.One, StateTransition.Safe);
+            // 3
+            fsm.ChangeState(States.Three, StateTransition.Safe);
 
-            yield return new WaitForSeconds(behaviour.longDuration * 0.5f);
-            
-            Assert.AreEqual(0, behaviour.oneExit);
-            Assert.AreEqual(0, behaviour.twoEnter);
-            
-            
-            // /1__2
+            // 3__/2
             fsm.ChangeState(States.Two);
             
-            Assert.AreEqual(0, behaviour.oneExit);
+            Assert.AreEqual(1, behaviour.threeExit);
+            
             Assert.AreEqual(0, behaviour.twoEnter);
 
-            yield return new WaitForSeconds(behaviour.longDuration + 0.1f); //Wait till after first transition
+            yield return new WaitForSeconds(duration / 2f);
+
+            // 3__/2\__4 //In safe mode, once a state is entered, both enter and exit are allowed to finish
+            fsm.ChangeState(States.Four);
             
-            Assert.AreEqual(1, behaviour.oneExit);
+            Assert.AreEqual(1, behaviour.threeExit);
+            
+            Assert.AreEqual(0, behaviour.twoEnter);
+            Assert.AreEqual(0, behaviour.twoUpdate);
+            Assert.AreEqual(0, behaviour.twoExit);
+            Assert.AreEqual(0, behaviour.twoFinally);
+            
+            Assert.AreEqual(0, behaviour.fourEnter);
+            
+            yield return new WaitForSeconds(duration / 2f + duration + 0.2f); 
+            
+            Assert.AreEqual(1, behaviour.threeExit);
+            
             Assert.AreEqual(1, behaviour.twoEnter);
+            Assert.AreEqual(1, behaviour.twoUpdate); //Single frame update while changing from Enter To Exit Routines. Not sure this is desired behaviour (zero update frames is more consistent), but don't want to cause a breaking change 
+            Assert.AreEqual(1, behaviour.twoExit); 
+            Assert.AreEqual(1, behaviour.twoFinally);
+            
+            Assert.AreEqual(1, behaviour.fourEnter);
         }
         
         [UnityTest]
         public IEnumerator TestChangeDuringAsyncExit()
         {
-            // 2
-            fsm.ChangeState(States.Two, StateTransition.Safe);
+            // 1
+            fsm.ChangeState(States.One, StateTransition.Safe);
             
-            // 2\__3 Start long exit to three
+            // 1\__3 
             fsm.ChangeState(States.Three, StateTransition.Safe);
             
-            yield return new WaitForSeconds(behaviour.longDuration * 0.5f);
+            yield return new WaitForSeconds(duration / 2f);
 
-            Assert.AreEqual(0, behaviour.twoExit);
+            Assert.AreEqual(0, behaviour.oneExit);
+            
             Assert.AreEqual(0, behaviour.threeEnter);
             Assert.AreEqual(0, behaviour.threeExit);
+            
             Assert.AreEqual(0, behaviour.fourEnter);
             
-            // 2\__4
-            fsm.ChangeState(States.Four); //Try interrupt long exit
+            // 1\__4 //In safe mode, before state is entered, newer state will supersede queued state 
+            fsm.ChangeState(States.Four); 
             
-            Assert.AreEqual(0, behaviour.twoExit);
+            Assert.AreEqual(0, behaviour.oneExit);
+            
             Assert.AreEqual(0, behaviour.threeEnter);
             Assert.AreEqual(0, behaviour.threeExit);
+            
             Assert.AreEqual(0, behaviour.fourEnter);
             
-            yield return new WaitForSeconds(behaviour.longDuration + 0.1f);
+            yield return new WaitForSeconds(duration / 2f + 0.2f);
             
-            //Ensure all states have been triggered
-            Assert.AreEqual(1, behaviour.twoExit);
+            Assert.AreEqual(1, behaviour.oneExit);
+            
             Assert.AreEqual(0, behaviour.threeEnter); //Three never runs
             Assert.AreEqual(0, behaviour.threeExit);
+            
             Assert.AreEqual(1, behaviour.fourEnter);
         }
 
-        private class StateClass : MonoBehaviour 
+        private class StateClass : MonoBehaviour
         {
-            public float longDuration;
-
+            public float duration;
+            
             public int oneEnter;
+            public int oneUpdate;
             public int oneExit;
+            public int oneFinally;
+            
             public int twoEnter;
+            public int twoUpdate;
             public int twoExit;
+            public int twoFinally;
+            
             public int threeEnter;
+            public int threeUpdate;
             public int threeExit;
+            public int threeFinally;
+            
             public int fourEnter;
+            public int fourUpdate;
             public int fourExit;
-
-            private bool oneEntered = false;
+            public int fourFinally;
             
-            IEnumerator One_Enter()
+            void One_Enter()
             {
-                Debug.Log("One Enter " + Time.time);
-
-                yield return new WaitForSeconds(longDuration);
-
-                Debug.Log("One Enter Complete " + Time.time);
-                
+                Debug.LogFormat("State:{0} Frame:{1}", "One Enter", Time.frameCount);
                 oneEnter++;
-                oneEntered = true;
+            }
+
+            void One_Update()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "One Update", Time.frameCount);
+                oneUpdate++;
             }
             
-            void One_Exit()
+            IEnumerator One_Exit()
             {
+                Debug.LogFormat("State:{0} Frame:{1}", "One Exit Start", Time.frameCount);
+                yield return  new WaitForSeconds(duration);
+                Debug.LogFormat("State:{0} Frame:{1}", "One Exit End", Time.frameCount);
                 oneExit++;
-                Debug.Log("One Exit " + Time.time);
-
-                if(!oneEntered)
-                {
-                    throw new Exception("One exit started before enter is complete");
-                }
-
+            }
+            
+            void One_Finally()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "One Finally", Time.frameCount);
+                oneFinally++;
             }
 
-            void Two_Enter()
+            IEnumerator Two_Enter()
             {
-                Debug.Log("Two Enter " + Time.time );
+                Debug.LogFormat("State:{0} Frame:{1}", "Two Enter Start", Time.frameCount);
+                yield return  new WaitForSeconds(duration);
+                Debug.LogFormat("State:{0} Frame:{1}", "Two Enter End", Time.frameCount);
                 twoEnter++;
+            }
+            
+            void Two_Update()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "Two Update", Time.frameCount);
+                twoUpdate++;
             }
 
             IEnumerator Two_Exit()
             {
-                Debug.Log("Two Exit " + Time.time);
-
-                yield return new WaitForSeconds(longDuration);
-
-                Debug.Log("Two Exit Complete " + Time.time);
-
+                Debug.LogFormat("State:{0} Frame:{1}", "Two Exit Start", Time.frameCount);
                 twoExit++;
+                yield return  new WaitForSeconds(duration);
+                Debug.LogFormat("State:{0} Frame:{1}", "Two Exit End", Time.frameCount);
+            }
+            
+            void Two_Finally()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "Two Finally", Time.frameCount);
+                twoFinally++;
             }
 
             void Three_Enter()
             {
-                Debug.Log("Three Enter");
+                Debug.LogFormat("State:{0} Frame:{1}", "Three Enter", Time.frameCount);
                 threeEnter++;
+            }
+            
+            void Three_Update()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "Three Update", Time.frameCount);
+                threeUpdate++;
             }
 
             void Three_Exit()
             {
-                Debug.Log("Three Exit");
+                Debug.LogFormat("State:{0} Frame:{1}", "Three Exit", Time.frameCount);
                 threeExit++;
+            }
+            
+            void Three_Finally()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "Three Finally", Time.frameCount);
+                threeFinally++;
             }
 
             void Four_Enter()
             {
-                Debug.Log("Four Enter");
+                Debug.LogFormat("State:{0} Frame:{1}", "Four Enter", Time.frameCount);
                 fourEnter++;
+            }
+            
+            void Four_Update()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "Four Update", Time.frameCount);
+                fourUpdate++;
             }
 
             void Four_Exit()
             {
-                Debug.Log("Four Exit");
+                Debug.LogFormat("State:{0} Frame:{1}", "Four Exit", Time.frameCount);
                 fourExit++;
+            }
+            
+            void Four_Finally()
+            {
+                Debug.LogFormat("State:{0} Frame:{1}", "Four Finally", Time.frameCount);
+                fourFinally++;
             }
         }
     }
