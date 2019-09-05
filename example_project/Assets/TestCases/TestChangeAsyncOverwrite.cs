@@ -119,43 +119,7 @@ namespace Tests
             
             Assert.AreEqual(1, behaviour.fourEnter);
         }
-        
-        
-        // [UnityTest]
-        // public IEnumerator TestChangeFromAsyncExit()
-        // {
-        //     // 1
-        //     fsm.ChangeState(States.One, StateTransition.Overwrite); // Contains fsm.Change(States 
-        //     
-        //     // 1\__/2
-        //     fsm.ChangeState(States.One, StateTransition.Safe);
-        //     
-        //     yield return new WaitForSeconds(duration * 0.5f);
-        //     
-        //     Assert.AreEqual(1, behaviour.oneEnter);
-        //     Assert.AreEqual(0, behaviour.oneUpdate);
-        //     Assert.AreEqual(0, behaviour.oneExit);
-        //     Assert.AreEqual(0, behaviour.oneFinally);
-        //     
-        //     Assert.AreEqual(0, behaviour.twoEnter);
-        //
-        //     // 1*__/4
-        //     fsm.ChangeState(States.Four, StateTransition.Overwrite);
-        //    
-        //     yield return new WaitForSeconds(duration + 0.2f);
-        //     
-        //     Assert.AreEqual(1, behaviour.oneEnter);
-        //     Assert.AreEqual(0, behaviour.oneUpdate);
-        //     Assert.AreEqual(0, behaviour.oneExit); //Cancelled - never completed
-        //     Assert.AreEqual(1, behaviour.oneFinally);
-        //     
-        //     Assert.AreEqual(0, behaviour.twoEnter); //Never entered
-        //     
-        //     Assert.AreEqual(1, behaviour.fourEnter);
-        // }
-        //
-        
-        
+
         private class StateClass : MonoBehaviour
         {
             public float duration;
