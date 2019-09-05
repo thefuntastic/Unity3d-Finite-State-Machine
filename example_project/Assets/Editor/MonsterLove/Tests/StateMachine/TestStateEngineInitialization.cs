@@ -2,14 +2,11 @@ using System;
 using MonsterLove.StateMachine;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using UnityTest;
 using Object = UnityEngine.Object;
 
 [TestFixture]
 [Category("State Machine Tests")]
-internal class TestStateEngineInitialization 
+public class TestStateEngineInitialization 
 {
 
 	public enum TestStates
@@ -24,14 +21,14 @@ internal class TestStateEngineInitialization
 	}
 
 	private GameObject go;
-	private MonoBehaviour behaviour;
+	private ClassWithBasicStates behaviour;
 	private StateMachineRunner engine;
 
 	[SetUp]
 	public void Init()
 	{
 		go = new GameObject("stateTest");
-		behaviour = go.AddComponent<MonoBehaviour>();
+		behaviour = go.AddComponent<ClassWithBasicStates>();
 		engine = go.AddComponent<StateMachineRunner>();
 		
 	}
@@ -43,7 +40,6 @@ internal class TestStateEngineInitialization
 	}
 
 	[Test]
-	//[ExpectedException]
 	public void TestInitializedTwice()
 	{ 
 		//Should this throw an error? I'm not sure?
@@ -52,10 +48,11 @@ internal class TestStateEngineInitialization
 	}
 
 	[Test]
-	[ExpectedException]
 	public void TestStatesDefined()
 	{
-		var fsm = engine.Initialize<TestNoDefines>(behaviour);
+		Assert.Throws<ArgumentException>(
+					  () => { engine.Initialize<TestNoDefines>(behaviour); }
+					 );
 	}
 }	
 
