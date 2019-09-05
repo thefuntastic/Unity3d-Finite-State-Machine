@@ -199,7 +199,7 @@ namespace MonsterLove.StateMachine
 			//Cancel any queued changes.
 			if (queuedChange != null)
 			{
-				engine.StopCoroutine(queuedChange);
+				component.StopCoroutine(queuedChange);
 				queuedChange = null;
 			}
 
@@ -225,7 +225,7 @@ namespace MonsterLove.StateMachine
 						{
 							//Damn, I need to test this hard
 							queuedChange = WaitForPreviousTransition(nextState);
-							engine.StartCoroutine(queuedChange);
+							component.StartCoroutine(queuedChange);
 							return;
 						}
 					}
@@ -233,15 +233,15 @@ namespace MonsterLove.StateMachine
 				case StateTransition.Overwrite:
 					if (currentTransition != null)
 					{
-						engine.StopCoroutine(currentTransition);
+						component.StopCoroutine(currentTransition);
 					}
 					if (exitRoutine != null)
 					{
-						engine.StopCoroutine(exitRoutine);
+						component.StopCoroutine(exitRoutine);
 					}
 					if (enterRoutine != null)
 					{
-						engine.StopCoroutine(enterRoutine);
+						component.StopCoroutine(enterRoutine);
 					}
 
 					//Note: if we are currently in an EnterRoutine and Exit is also a routine, this will be skipped in ChangeToNewStateRoutine()
@@ -253,7 +253,7 @@ namespace MonsterLove.StateMachine
 			{
 				isInTransition = true;
 				currentTransition = ChangeToNewStateRoutine(nextState, transition);
-				engine.StartCoroutine(currentTransition);
+				component.StartCoroutine(currentTransition);
 			}
 			else //Same frame transition, no coroutines are present
 			{
@@ -289,7 +289,7 @@ namespace MonsterLove.StateMachine
 
 					if (exitRoutine != null && transition != StateTransition.Overwrite) //Don't wait for exit if we are overwriting
 					{
-						yield return engine.StartCoroutine(exitRoutine);
+						yield return component.StartCoroutine(exitRoutine);
 					}
 
 					exitRoutine = null;
@@ -313,7 +313,7 @@ namespace MonsterLove.StateMachine
 
 					if (enterRoutine != null)
 					{
-						yield return engine.StartCoroutine(enterRoutine);
+						yield return component.StartCoroutine(enterRoutine);
 					}
 
 					enterRoutine = null;
