@@ -2,7 +2,7 @@
 
 namespace MonsterLove.StateMachine
 {
-    public class StateMachineDriverDefault
+    public class StateMachineDriverDefault : StateMachineDriver
     {
         public Action FixedUpdate;
         public Action Update;

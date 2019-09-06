@@ -37,14 +37,14 @@ namespace MonsterLove.StateMachine
 		Overwrite,
 	}
 
-	public interface IStateMachine
+	public interface IStateMachine<TDriver>
 	{
 		MonoBehaviour Component { get; }
-		StateMapping CurrentStateMap { get; }
+		TDriver Driver { get; }
 		bool IsInTransition { get; }
 	}
 
-	public class StateMachine<T> : StateMachine<T, StateMachineDriverDefault> where T : struct, IConvertible, IComparable
+	public class StateMachine<TState> : StateMachine<TState, StateMachineDriverDefault> where TState : struct, IConvertible, IComparable
 	{
 		public StateMachine(MonoBehaviour component, StateMachineDriverDefault driver) : base(component, driver)
 		{
@@ -52,18 +52,18 @@ namespace MonsterLove.StateMachine
 		}
 	}
 	
-	public class StateMachine<T, U> : IStateMachine where T : struct, IConvertible, IComparable
+	public class StateMachine<TState, TDriver> : IStateMachine<TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
 	{
-		public event Action<T> Changed;
+		public event Action<TState> Changed;
 
 		private StateMachineDriverDefault driver;
 		private MonoBehaviour component;
 
-		private StateMapping lastState;
-		private StateMapping currentState;
-		private StateMapping destinationState;
+		private StateMapping<TDriver> lastState;
+		private StateMapping<TDriver> currentState;
+		private StateMapping<TDriver> destinationState;
 
-		private Dictionary<object, StateMapping> stateLookup;
+		private Dictionary<object, StateMapping<TDriver>> stateLookup;
 
 		private bool isInTransition = false;
 		private IEnumerator currentTransition;
@@ -77,16 +77,16 @@ namespace MonsterLove.StateMachine
 			this.driver = driver;
 			
 			//Define States
-			var values = Enum.GetValues(typeof(T));
+			var values = Enum.GetValues(typeof(TState));
 			if (values.Length < 1)
 			{
 				throw new ArgumentException("Enum provided to Initialize must have at least 1 visible definition");
 			}
 
-			stateLookup = new Dictionary<object, StateMapping>();
+			stateLookup = new Dictionary<object, StateMapping<TDriver>>();
 			for (int i = 0; i < values.Length; i++)
 			{
-				var mapping = new StateMapping((Enum) values.GetValue(i));
+				var mapping = new StateMapping<TDriver>((Enum) values.GetValue(i));
 				stateLookup.Add(mapping.state, mapping);
 			}
 
@@ -121,7 +121,7 @@ namespace MonsterLove.StateMachine
 				Enum key;
 				try
 				{
-					key = (Enum) Enum.Parse(typeof(T), stateName);
+					key = (Enum) Enum.Parse(typeof(TState), stateName);
 				}
 				catch (ArgumentException)
 				{
@@ -129,14 +129,14 @@ namespace MonsterLove.StateMachine
 					continue;
 				}
 
-				StateMapping targetState = stateLookup[key];
+				StateMapping<TDriver> targetState = stateLookup[key];
 
 				if (callbackDefintions.ContainsKey(eventName))
 				{
 					FieldInfo def = callbackDefintions[eventName];
 					
 					Delegate del = Delegate.CreateDelegate(def.FieldType, component, methods[i]);
-					def.SetValue(driver, del);
+					def.SetValue(targetState.driver, del);
 					
 					continue;
 				}
@@ -176,7 +176,7 @@ namespace MonsterLove.StateMachine
 			}
 
 			//Create nil state mapping
-			currentState = new StateMapping(null);
+			currentState = new StateMapping<TDriver>(null);
 		}
 
 
@@ -211,12 +211,12 @@ namespace MonsterLove.StateMachine
 
 		}
 
-		public void ChangeState(T newState)
+		public void ChangeState(TState newState)
 		{
 			ChangeState(newState, StateTransition.Safe);
 		}
 
-		public void ChangeState(T newState, StateTransition transition)
+		public void ChangeState(TState newState, StateTransition transition)
 		{
 			if (stateLookup == null)
 			{
@@ -306,14 +306,14 @@ namespace MonsterLove.StateMachine
 					currentState.EnterCall();
 					if (Changed != null)
 					{
-						Changed((T) currentState.state);
+						Changed((TState) currentState.state);
 					}
 				}
 				isInTransition = false;
 			}
 		}
 
-		private IEnumerator ChangeToNewStateRoutine(StateMapping newState, StateTransition transition)
+		private IEnumerator ChangeToNewStateRoutine(StateMapping<TDriver> newState, StateTransition transition)
 		{
 			destinationState = newState; //Cache this so that we can overwrite it and hijack a transition
 
@@ -362,36 +362,36 @@ namespace MonsterLove.StateMachine
 				//Broadcast change only after enter transition has begun. 
 				if (Changed != null)
 				{
-					Changed((T) currentState.state);
+					Changed((TState) currentState.state);
 				}
 			}
 
 			isInTransition = false;
 		}
 
-		IEnumerator WaitForPreviousTransition(StateMapping nextState)
+		IEnumerator WaitForPreviousTransition(StateMapping<TDriver> nextState)
 		{
 			while (isInTransition)
 			{
 				yield return null;
 			}
 
-			ChangeState((T) nextState.state);
+			ChangeState((TState) nextState.state);
 		}
 
-		public T LastState
+		public TState LastState
 		{
 			get
 			{
-				if (lastState == null) return default(T);
+				if (lastState == null) return default(TState);
 
-				return (T) lastState.state;
+				return (TState) lastState.state;
 			}
 		}
 
-		public T State
+		public TState State
 		{
-			get { return (T) currentState.state; }
+			get { return (TState) currentState.state; }
 		}
 
 		public bool IsInTransition
@@ -399,7 +399,12 @@ namespace MonsterLove.StateMachine
 			get { return isInTransition; }
 		}
 
-		public StateMapping CurrentStateMap
+		public TDriver Driver
+		{
+			get { return (TDriver) CurrentStateMap.driver; }
+		}
+		
+		public StateMapping<TDriver> CurrentStateMap
 		{
 			get { return currentState; }
 		}
@@ -412,37 +417,38 @@ namespace MonsterLove.StateMachine
 		//Static Methods
 
 		/// <summary>
-		/// Inspects a MonoBehaviour for state methods as definied by the supplied Enum, and returns a stateMachine instance used to trasition states.
+		/// Inspects a MonoBehaviour for state methods as defined by the supplied Enum, and returns a stateMachine instance used to transition states.
 		/// </summary>
 		/// <param name="component">The component with defined state methods</param>
 		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
-		public static StateMachine<T> Initialize(MonoBehaviour component)
+		public static StateMachine<TState> Initialize(MonoBehaviour component)
 		{
 			var engine = component.GetComponent<StateMachineRunner>();
 			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
-			return engine.Initialize<T>(component);
+			return engine.Initialize<TState>(component);
 		}
 
 		/// <summary>
-		/// Inspects a MonoBehaviour for state methods as definied by the supplied Enum, and returns a stateMachine instance used to trasition states. 
+		/// Inspects a MonoBehaviour for state methods as defined by the supplied Enum, and returns a stateMachine instance used to transition states. 
 		/// </summary>
 		/// <param name="component">The component with defined state methods</param>
 		/// <param name="startState">The default starting state</param>
 		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
-		public static StateMachine<T> Initialize(MonoBehaviour component, T startState)
+		public static StateMachine<TState> Initialize(MonoBehaviour component, TState startState)
 		{
 			var engine = component.GetComponent<StateMachineRunner>();
 			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
-			return engine.Initialize<T>(component, startState);
+			return engine.Initialize<TState>(component, startState);
 		}
 
 	}
 	
-	public class StateMapping
+	public class StateMapping<TDriver> where TDriver : class, new()
 	{
 		public object state;
+		public TDriver driver;
 
 		public bool hasEnterRoutine;
 		public Action EnterCall = StateMachineRunner.DoNothing;
@@ -453,14 +459,11 @@ namespace MonsterLove.StateMachine
 		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
 
 		public Action Finally = StateMachineRunner.DoNothing;
-
-		public Action Update = StateMachineRunner.DoNothing;
-		public Action LateUpdate = StateMachineRunner.DoNothing;
-		public Action FixedUpdate = StateMachineRunner.DoNothing;
-
+		
 		public StateMapping(object state)
 		{
 			this.state = state;
+			driver = new TDriver();
 		}
 
 	}

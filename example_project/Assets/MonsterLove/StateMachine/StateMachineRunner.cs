@@ -29,18 +29,18 @@ namespace MonsterLove.StateMachine
 {
 	public class StateMachineRunner : MonoBehaviour
 	{
-		private List<IStateMachine> stateMachineList = new List<IStateMachine>();
+		private List<IStateMachine<StateMachineDriverDefault>> stateMachineList = new List<IStateMachine<StateMachineDriverDefault>>();
 		private StateMachineDriverDefault driver = new StateMachineDriverDefault();
 
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 
 		/// </summary>
-		/// <typeparam name="T">An Enum listing different state transitions</typeparam>
+		/// <typeparam name="TState">An Enum listing different state transitions</typeparam>
 		/// <param name="component">The component whose state will be managed</param>
 		/// <returns></returns>
-		public StateMachine<T> Initialize<T>(MonoBehaviour component) where T : struct, IConvertible, IComparable
+		public StateMachine<TState> Initialize<TState>(MonoBehaviour component) where TState : struct, IConvertible, IComparable
 		{
-			var fsm = new StateMachine<T>(component, driver);
+			var fsm = new StateMachine<TState>(component, driver);
 
 			stateMachineList.Add(fsm);
 
@@ -50,13 +50,13 @@ namespace MonsterLove.StateMachine
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. Will automatically transition the startState
 		/// </summary>
-		/// <typeparam name="T">An Enum listing different state transitions</typeparam>
+		/// <typeparam name="TState">An Enum listing different state transitions</typeparam>
 		/// <param name="component">The component whose state will be managed</param>
 		/// <param name="startState">The default start state</param>
 		/// <returns></returns>
-		public StateMachine<T> Initialize<T>(MonoBehaviour component, T startState) where T : struct, IConvertible, IComparable
+		public StateMachine<TState> Initialize<TState>(MonoBehaviour component, TState startState) where TState : struct, IConvertible, IComparable
 		{
-			var fsm = Initialize<T>(component);
+			var fsm = Initialize<TState>(component);
 
 			fsm.ChangeState(startState);
 
@@ -70,7 +70,7 @@ namespace MonsterLove.StateMachine
 				var fsm = stateMachineList[i];
 				if (!fsm.IsInTransition && fsm.Component.enabled)
 				{
-					driver.FixedUpdate.Send();
+					fsm.Driver.FixedUpdate.Send();
 				}
 			}
 		}
@@ -82,7 +82,7 @@ namespace MonsterLove.StateMachine
 				var fsm = stateMachineList[i];
 				if (!fsm.IsInTransition && fsm.Component.enabled)
 				{
-					driver.Update.Send();
+					fsm.Driver.Update.Send();
 				}
 			}
 		}
@@ -94,7 +94,7 @@ namespace MonsterLove.StateMachine
 				var fsm = stateMachineList[i];
 				if (!fsm.IsInTransition && fsm.Component.enabled)
 				{
-					driver.LateUpdate.Send();
+					fsm.Driver.LateUpdate.Send();
 				}
 			}
 		}
