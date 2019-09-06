@@ -26,7 +26,7 @@ public class Main : MonoBehaviour
 		startHealth = health;
 
 		//Initialize State Machine Engine		
-		fsm = new StateMachine<States, StateMachineDriverUnity>(this, null);
+		fsm = new StateMachine<States, StateMachineDriverUnity>(this);
 		fsm.ChangeState(States.Init);
 	}
 

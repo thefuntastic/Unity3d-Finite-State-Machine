@@ -47,7 +47,7 @@ namespace MonsterLove.StateMachine
 
 	public class StateMachine<TState> : StateMachine<TState, StateMachineDriverDefault> where TState : struct, IConvertible, IComparable
 	{
-		public StateMachine(MonoBehaviour component, StateMachineDriverDefault driver) : base(component, driver)
+		public StateMachine(MonoBehaviour component) : base(component)
 		{
 			
 		}
@@ -57,7 +57,6 @@ namespace MonsterLove.StateMachine
 	{
 		public event Action<TState> Changed;
 
-		private TDriver driver;
 		private MonoBehaviour component;
 
 		private StateMapping<TDriver> lastState;
@@ -72,11 +71,10 @@ namespace MonsterLove.StateMachine
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		public StateMachine(MonoBehaviour component, TDriver driver)
+		public StateMachine(MonoBehaviour component)
 		{
 			this.component = component;
-			this.driver = driver;
-			
+
 			//Define States
 			var values = Enum.GetValues(typeof(TState));
 			if (values.Length < 1)

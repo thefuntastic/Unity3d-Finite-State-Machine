@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using MonsterLove.StateMachine;
 using NUnit.Framework;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
 
 namespace Tests
 {

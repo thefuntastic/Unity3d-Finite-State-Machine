@@ -30,7 +30,6 @@ namespace MonsterLove.StateMachine
 	public class StateMachineRunner : MonoBehaviour
 	{
 		private List<IStateMachine<StateMachineDriverDefault>> stateMachineList = new List<IStateMachine<StateMachineDriverDefault>>();
-		private StateMachineDriverDefault driver = new StateMachineDriverDefault();
 
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 
@@ -40,7 +39,7 @@ namespace MonsterLove.StateMachine
 		/// <returns></returns>
 		public StateMachine<TState> Initialize<TState>(MonoBehaviour component) where TState : struct, IConvertible, IComparable
 		{
-			var fsm = new StateMachine<TState>(component, driver);
+			var fsm = new StateMachine<TState>(component);
 
 			stateMachineList.Add(fsm);
 

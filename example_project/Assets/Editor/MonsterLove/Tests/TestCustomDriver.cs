@@ -34,7 +34,7 @@ public class TestCustomDriver
         go = new GameObject();
         behaviour = go.AddComponent<StateClass>();
 
-        fsm = new StateMachine<States, CustomDriver>(behaviour, null);
+        fsm = new StateMachine<States, CustomDriver>(behaviour);
     }
 
     [TearDown]
