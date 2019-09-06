@@ -400,14 +400,9 @@ namespace MonsterLove.StateMachine
 
 		public TDriver Driver
 		{
-			get { return (TDriver) CurrentStateMap.driver; }
+			get { return (TDriver) currentState.driver; }
 		}
 		
-		public StateMapping<TDriver> CurrentStateMap
-		{
-			get { return currentState; }
-		}
-
 		public MonoBehaviour Component
 		{
 			get { return component; }
