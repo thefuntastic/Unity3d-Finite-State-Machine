@@ -28,6 +28,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Object = System.Object;
+using Random = UnityEngine.Random;
 
 namespace MonsterLove.StateMachine
 {
@@ -56,7 +57,7 @@ namespace MonsterLove.StateMachine
 	{
 		public event Action<TState> Changed;
 
-		private StateMachineDriverDefault driver;
+		private TDriver driver;
 		private MonoBehaviour component;
 
 		private StateMapping<TDriver> lastState;
@@ -71,7 +72,7 @@ namespace MonsterLove.StateMachine
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		public StateMachine(MonoBehaviour component, StateMachineDriverDefault driver)
+		public StateMachine(MonoBehaviour component, TDriver driver)
 		{
 			this.component = component;
 			this.driver = driver;
@@ -91,10 +92,10 @@ namespace MonsterLove.StateMachine
 			}
 
 			//Reflect methods
-			var methods = component.GetType().GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
+			MethodInfo[] methods = component.GetType().GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
 														 BindingFlags.NonPublic);
 
-			var callbackDefintions = ReflectDriver(driver);
+			Dictionary<string, FieldInfo> callbackDefintions = ReflectDriver(typeof(TDriver));
 
 			//Bind methods to states
 			var separator = "_".ToCharArray();
@@ -180,15 +181,15 @@ namespace MonsterLove.StateMachine
 		}
 
 
-		static Dictionary<string, FieldInfo> ReflectDriver(object driver)
+		static Dictionary<string, FieldInfo> ReflectDriver(Type driverType)
 		{
-			FieldInfo[] fields = driver.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			FieldInfo[] fields = driverType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			
 			var dict = new Dictionary<string, FieldInfo>();
 
 			for (int i = 0; i < fields.Length; i++)
 			{
-				var item = fields[i];
+				FieldInfo item = fields[i];
 				if (item.FieldType.ToString().Contains("Action"))
 				{
 					dict.Add(item.Name, item);
