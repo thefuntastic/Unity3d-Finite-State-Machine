@@ -437,6 +437,29 @@ namespace MonsterLove.StateMachine
 			return engine.Initialize<TState>(component, startState);
 		}
 
+		public void Send(Action action)
+		{
+			if (!isInTransition && action != null)
+			{
+				action.Send();	
+			}
+		}
+
+		public void Send<T1>(Action<T1> action, T1 param1)
+		{
+			if (!isInTransition && action != null)
+			{
+				action.Send(param1);	
+			}
+		}
+		
+		public void Send<T1, T2>(Action<T1, T2> action, T1 param1, T2 param2)
+		{
+			if (!isInTransition && action != null)
+			{
+				action.Send(param1, param2);
+			}
+		}
 	}
 	
 	public class StateMapping<TDriver> where TDriver : class, new()

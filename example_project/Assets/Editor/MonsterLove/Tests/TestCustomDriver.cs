@@ -48,9 +48,9 @@ public class TestCustomDriver
     {
         fsm.ChangeState(States.One);
 
-        fsm.Driver.Foo.Send();
-        fsm.Driver.Bar.Send(5);
-        fsm.Driver.Baz.Send(6, 7);
+        fsm.Send(fsm.Driver.Foo);
+        fsm.Send(fsm.Driver.Bar, 5);
+        fsm.Send(fsm.Driver.Baz, 6, 7);
 
         Assert.AreEqual(1, behaviour.oneFoo);
         Assert.AreEqual(1, behaviour.oneBar);
@@ -68,9 +68,9 @@ public class TestCustomDriver
 
         fsm.ChangeState(States.Two);
 
-        fsm.Driver.Foo.Send();
-        fsm.Driver.Bar.Send(8);
-        fsm.Driver.Baz.Send(9, 10);
+        fsm.Send(fsm.Driver.Foo);
+        fsm.Send(fsm.Driver.Bar, 8);
+        fsm.Send(fsm.Driver.Baz, 9, 10);
 
         Assert.AreEqual(1, behaviour.oneFoo);
         Assert.AreEqual(1, behaviour.oneBar);
