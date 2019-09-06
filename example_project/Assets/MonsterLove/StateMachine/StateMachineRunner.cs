@@ -23,16 +23,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using Object = System.Object;
 
 namespace MonsterLove.StateMachine
 {
 	public class StateMachineRunner : MonoBehaviour
 	{
 		private List<IStateMachine> stateMachineList = new List<IStateMachine>();
+		private StateMachineDriverDefault driver = new StateMachineDriverDefault();
 
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 
@@ -42,7 +40,7 @@ namespace MonsterLove.StateMachine
 		/// <returns></returns>
 		public StateMachine<T> Initialize<T>(MonoBehaviour component) where T : struct, IConvertible, IComparable
 		{
-			var fsm = new StateMachine<T>(this, component);
+			var fsm = new StateMachine<T>(component, driver);
 
 			stateMachineList.Add(fsm);
 
@@ -70,7 +68,10 @@ namespace MonsterLove.StateMachine
 			for (int i = 0; i < stateMachineList.Count; i++)
 			{
 				var fsm = stateMachineList[i];
-				if(!fsm.IsInTransition && fsm.Component.enabled) fsm.CurrentStateMap.FixedUpdate();
+				if (!fsm.IsInTransition && fsm.Component.enabled)
+				{
+					driver.FixedUpdate.Send();
+				}
 			}
 		}
 
@@ -81,7 +82,7 @@ namespace MonsterLove.StateMachine
 				var fsm = stateMachineList[i];
 				if (!fsm.IsInTransition && fsm.Component.enabled)
 				{
-					fsm.CurrentStateMap.Update();
+					driver.Update.Send();
 				}
 			}
 		}
@@ -93,28 +94,12 @@ namespace MonsterLove.StateMachine
 				var fsm = stateMachineList[i];
 				if (!fsm.IsInTransition && fsm.Component.enabled)
 				{
-					fsm.CurrentStateMap.LateUpdate();
+					driver.LateUpdate.Send();
 				}
 			}
 		}
 
-		//void OnCollisionEnter(Collision collision)
-		//{
-		//	if(currentState != null && !IsInTransition)
-		//	{
-		//		currentState.OnCollisionEnter(collision);
-		//	}
-		//}
-
 		public static void DoNothing()
-		{
-		}
-
-		public static void DoNothingCollider(Collider other)
-		{
-		}
-
-		public static void DoNothingCollision(Collision other)
 		{
 		}
 
@@ -125,30 +110,7 @@ namespace MonsterLove.StateMachine
 	}
 
 	
-	public class StateMapping
-	{
-		public object state;
-
-		public bool hasEnterRoutine;
-		public Action EnterCall = StateMachineRunner.DoNothing;
-		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
-
-		public bool hasExitRoutine;
-		public Action ExitCall = StateMachineRunner.DoNothing;
-		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
-
-		public Action Finally = StateMachineRunner.DoNothing;
-		public Action Update = StateMachineRunner.DoNothing;
-		public Action LateUpdate = StateMachineRunner.DoNothing;
-		public Action FixedUpdate = StateMachineRunner.DoNothing;
-		public Action<Collision> OnCollisionEnter = StateMachineRunner.DoNothingCollision;
-
-		public StateMapping(object state)
-		{
-			this.state = state;
-		}
-
-	}
+	
 }
 
 

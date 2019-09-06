@@ -44,11 +44,19 @@ namespace MonsterLove.StateMachine
 		bool IsInTransition { get; }
 	}
 
-	public class StateMachine<T> : IStateMachine where T : struct, IConvertible, IComparable
+	public class StateMachine<T> : StateMachine<T, StateMachineDriverDefault> where T : struct, IConvertible, IComparable
+	{
+		public StateMachine(MonoBehaviour component, StateMachineDriverDefault driver) : base(component, driver)
+		{
+			
+		}
+	}
+	
+	public class StateMachine<T, U> : IStateMachine where T : struct, IConvertible, IComparable
 	{
 		public event Action<T> Changed;
 
-		private StateMachineRunner engine;
+		private StateMachineDriverDefault driver;
 		private MonoBehaviour component;
 
 		private StateMapping lastState;
@@ -57,22 +65,23 @@ namespace MonsterLove.StateMachine
 
 		private Dictionary<object, StateMapping> stateLookup;
 
-		private readonly string[] ignoredNames = new[] { "add", "remove", "get", "set" };
-
 		private bool isInTransition = false;
 		private IEnumerator currentTransition;
 		private IEnumerator exitRoutine;
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		public StateMachine(StateMachineRunner engine, MonoBehaviour component)
+		public StateMachine(MonoBehaviour component, StateMachineDriverDefault driver)
 		{
-			this.engine = engine;
 			this.component = component;
-
+			this.driver = driver;
+			
 			//Define States
 			var values = Enum.GetValues(typeof(T));
-			if (values.Length < 1) { throw new ArgumentException("Enum provided to Initialize must have at least 1 visible definition"); }
+			if (values.Length < 1)
+			{
+				throw new ArgumentException("Enum provided to Initialize must have at least 1 visible definition");
+			}
 
 			stateLookup = new Dictionary<object, StateMapping>();
 			for (int i = 0; i < values.Length; i++)
@@ -83,7 +92,9 @@ namespace MonsterLove.StateMachine
 
 			//Reflect methods
 			var methods = component.GetType().GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public |
-									  BindingFlags.NonPublic);
+														 BindingFlags.NonPublic);
+
+			var callbackDefintions = ReflectDriver(driver);
 
 			//Bind methods to states
 			var separator = "_".ToCharArray();
@@ -93,8 +104,10 @@ namespace MonsterLove.StateMachine
 				{
 					continue;
 				}
-
-				var names = methods[i].Name.Split(separator);
+				
+				//TODO change this to index based lookup 
+				//means instead of splitting all underscores, we only split the first one
+				string[] names = methods[i].Name.Split(separator);
 
 				//Ignore functions without an underscore
 				if (names.Length <= 1)
@@ -102,10 +115,13 @@ namespace MonsterLove.StateMachine
 					continue;
 				}
 
+				string stateName = names[0];
+				string eventName = names[1];
+				
 				Enum key;
 				try
 				{
-					key = (Enum) Enum.Parse(typeof(T), names[0]);
+					key = (Enum) Enum.Parse(typeof(T), stateName);
 				}
 				catch (ArgumentException)
 				{
@@ -113,7 +129,17 @@ namespace MonsterLove.StateMachine
 					continue;
 				}
 
-				var targetState = stateLookup[key];
+				StateMapping targetState = stateLookup[key];
+
+				if (callbackDefintions.ContainsKey(eventName))
+				{
+					FieldInfo def = callbackDefintions[eventName];
+					
+					Delegate del = Delegate.CreateDelegate(def.FieldType, component, methods[i]);
+					def.SetValue(driver, del);
+					
+					continue;
+				}
 
 				switch (names[1])
 				{
@@ -128,6 +154,7 @@ namespace MonsterLove.StateMachine
 							targetState.hasEnterRoutine = false;
 							targetState.EnterCall = CreateDelegate<Action>(methods[i], component);
 						}
+
 						break;
 					case "Exit":
 						if (methods[i].ReturnType == typeof(IEnumerator))
@@ -140,27 +167,36 @@ namespace MonsterLove.StateMachine
 							targetState.hasExitRoutine = false;
 							targetState.ExitCall = CreateDelegate<Action>(methods[i], component);
 						}
+
 						break;
 					case "Finally":
 						targetState.Finally = CreateDelegate<Action>(methods[i], component);
-						break;
-					case "Update":
-						targetState.Update = CreateDelegate<Action>(methods[i], component);
-						break;
-					case "LateUpdate":
-						targetState.LateUpdate = CreateDelegate<Action>(methods[i], component);
-						break;
-					case "FixedUpdate":
-						targetState.FixedUpdate = CreateDelegate<Action>(methods[i], component);
-						break;
-					case "OnCollisionEnter":
-						targetState.OnCollisionEnter = CreateDelegate<Action<Collision>>(methods[i], component);
 						break;
 				}
 			}
 
 			//Create nil state mapping
 			currentState = new StateMapping(null);
+		}
+
+
+		static Dictionary<string, FieldInfo> ReflectDriver(object driver)
+		{
+			FieldInfo[] fields = driver.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			
+			var dict = new Dictionary<string, FieldInfo>();
+
+			for (int i = 0; i < fields.Length; i++)
+			{
+				var item = fields[i];
+				if (item.FieldType.ToString().Contains("Action"))
+				{
+					dict.Add(item.Name, item);
+				}
+				// Debug.LogFormat("Name {0} type {1}", item.Name, item.FieldType);
+			}
+			
+			return dict;
 		}
 
 		private V CreateDelegate<V>(MethodInfo method, Object target) where V : class
@@ -279,7 +315,7 @@ namespace MonsterLove.StateMachine
 
 		private IEnumerator ChangeToNewStateRoutine(StateMapping newState, StateTransition transition)
 		{
-			destinationState = newState; //Chache this so that we can overwrite it and hijack a transition
+			destinationState = newState; //Cache this so that we can overwrite it and hijack a transition
 
 			if (currentState != null)
 			{
@@ -400,6 +436,31 @@ namespace MonsterLove.StateMachine
 			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
 			return engine.Initialize<T>(component, startState);
+		}
+
+	}
+	
+	public class StateMapping
+	{
+		public object state;
+
+		public bool hasEnterRoutine;
+		public Action EnterCall = StateMachineRunner.DoNothing;
+		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
+
+		public bool hasExitRoutine;
+		public Action ExitCall = StateMachineRunner.DoNothing;
+		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
+
+		public Action Finally = StateMachineRunner.DoNothing;
+
+		public Action Update = StateMachineRunner.DoNothing;
+		public Action LateUpdate = StateMachineRunner.DoNothing;
+		public Action FixedUpdate = StateMachineRunner.DoNothing;
+
+		public StateMapping(object state)
+		{
+			this.state = state;
 		}
 
 	}
