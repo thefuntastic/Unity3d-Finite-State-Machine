@@ -19,58 +19,46 @@ public class Main : MonoBehaviour
 
 	private float startHealth;
 
-	private StateMachine<States> fsm;
+	private StateMachine<States, StateMachineDriverUnity> fsm;
 
 	private void Awake()
 	{
 		startHealth = health;
 
 		//Initialize State Machine Engine		
-		fsm = StateMachine<States>.Initialize(this, States.Init);
+		fsm = new StateMachine<States, StateMachineDriverUnity>(this, null);
+		fsm.ChangeState(States.Init);
+	}
+
+	void Update()
+	{
+		fsm.Driver.Update.Send();
 	}
 
 	void OnGUI()
 	{
-		//Example of polling state 
-		var state = fsm.State;
-
 		GUILayout.BeginArea(new Rect(50,50,120,40));
-
-		if(state == States.Init && GUILayout.Button("Start"))
-		{
-			fsm.ChangeState(States.Countdown);
-		}
-		if(state == States.Countdown)
-		{
-			GUILayout.Label("Look at Console");
-		}
-		if(state == States.Play)
-		{
-			if(GUILayout.Button("Force Win"))
-			{
-				fsm.ChangeState(States.Win);
-			}
-			
-			GUILayout.Label("Health: " + Mathf.Round(health).ToString());
-		}
-		if(state == States.Win || state == States.Lose)
-		{
-			if(GUILayout.Button("Play Again"))
-			{
-				fsm.ChangeState(States.Countdown);
-			}
-		}
-
+		
+		fsm.Driver.OnGUI.Send();
+		
 		GUILayout.EndArea();
 	}
 
-	private void Init_Enter()
+	void Init_Enter()
 	{
 		Debug.Log("Waiting for start button to be pressed");
 	}
 
+	void Init_OnGUI()
+	{
+		if(GUILayout.Button("Start"))
+		{
+			fsm.ChangeState(States.Countdown);
+		}
+	}
+
 	//We can return a coroutine, this is useful animations and the like
-	private IEnumerator Countdown_Enter()
+	IEnumerator Countdown_Enter()
 	{
 		health = startHealth;
 
@@ -82,16 +70,19 @@ public class Main : MonoBehaviour
 		yield return new WaitForSeconds(0.5f);
 
 		fsm.ChangeState(States.Play);
-
 	}
 
+	void Countdown_OnGUI()
+	{
+		GUILayout.Label("Look at Console");
+	}
 
-	private void Play_Enter()
+	void Play_Enter()
 	{
 		Debug.Log("FIGHT!");
 	}
 
-	private void Play_Update()
+	void Play_Update()
 	{
 		health -= damage * Time.deltaTime;
 	
@@ -99,6 +90,16 @@ public class Main : MonoBehaviour
 		{
 			fsm.ChangeState(States.Lose);
 		}
+	}
+
+	void Play_OnGUI()
+	{
+		if(GUILayout.Button("Force Win"))
+		{
+			fsm.ChangeState(States.Win);
+		}
+			
+		GUILayout.Label("Health: " + Mathf.Round(health).ToString());
 	}
 
 	void Play_Exit()
@@ -110,9 +111,25 @@ public class Main : MonoBehaviour
 	{
 		Debug.Log("Lost");
 	}
+	
+	void Lose_OnGUI()
+	{
+		if(GUILayout.Button("Play Again"))
+		{
+			fsm.ChangeState(States.Countdown);
+		}
+	}
 
 	void Win_Enter()
 	{
 		Debug.Log("Won");
+	}
+
+	void Win_OnGUI()
+	{
+		if(GUILayout.Button("Play Again"))
+		{
+			fsm.ChangeState(States.Countdown);
+		}
 	}
 }
