@@ -39,38 +39,21 @@ internal class TestDerivedFromSuperClass
 	[Test]
 	public void InitialTransition()
 	{
-		//This is an odd request by a user, where they wanted to use methods declared in a super class. By default we expect this to fail, but we can enable this behaivour
-		//by removing BindingFlags.DeclaredOnly from the reflection routine in StateMachine.cs
-
 		fsm = engine.Initialize<States>(behaviour, States.One);
 		fsm.ChangeState(States.Two);
 
 		//Test for when we want to include superclass methods
-		//Assert.AreEqual(1, behaviour.oneStats.enterCount);
-		//Assert.AreEqual(0, behaviour.oneStats.updateCount);
-		//Assert.AreEqual(0, behaviour.oneStats.lateUpdateCount);
-		//Assert.AreEqual(1, behaviour.oneStats.exitCount);
-		//Assert.AreEqual(1, behaviour.oneStats.finallyCount);
-
-		//Assert.AreEqual(1, behaviour.twoStats.enterCount);
-		//Assert.AreEqual(0, behaviour.twoStats.updateCount);
-		//Assert.AreEqual(0, behaviour.twoStats.lateUpdateCount);
-		//Assert.AreEqual(0, behaviour.twoStats.exitCount);
-		//Assert.AreEqual(0, behaviour.twoStats.finallyCount);
-
-		//Test for no superclass methods
-		Assert.AreEqual(0, behaviour.oneStats.enterCount);
+		Assert.AreEqual(1, behaviour.oneStats.enterCount);
 		Assert.AreEqual(0, behaviour.oneStats.updateCount);
 		Assert.AreEqual(0, behaviour.oneStats.lateUpdateCount);
-		Assert.AreEqual(0, behaviour.oneStats.exitCount);
-		Assert.AreEqual(0, behaviour.oneStats.finallyCount);
+		Assert.AreEqual(1, behaviour.oneStats.exitCount);
+		Assert.AreEqual(1, behaviour.oneStats.finallyCount);
 
-		Assert.AreEqual(0, behaviour.twoStats.enterCount);
+		Assert.AreEqual(1, behaviour.twoStats.enterCount);
 		Assert.AreEqual(0, behaviour.twoStats.updateCount);
 		Assert.AreEqual(0, behaviour.twoStats.lateUpdateCount);
 		Assert.AreEqual(0, behaviour.twoStats.exitCount);
 		Assert.AreEqual(0, behaviour.twoStats.finallyCount);
-
 	}
 }	
 
