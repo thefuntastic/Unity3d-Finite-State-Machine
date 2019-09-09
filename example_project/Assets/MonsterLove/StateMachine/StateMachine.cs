@@ -31,570 +31,570 @@ using Object = System.Object;
 
 namespace MonsterLove.StateMachine
 {
-    public enum StateTransition
-    {
-        Safe,
-        Overwrite,
-    }
+	public enum StateTransition
+	{
+		Safe,
+		Overwrite,
+	}
 
-    public interface IStateMachine<TDriver>
-    {
-        MonoBehaviour Component { get; }
-        TDriver Driver { get; }
-        bool IsInTransition { get; }
-    }
+	public interface IStateMachine<TDriver>
+	{
+		MonoBehaviour Component { get; }
+		TDriver Driver { get; }
+		bool IsInTransition { get; }
+	}
 
-    public class StateMachine<TState> : StateMachine<TState, StateMachineDriverDefault> where TState : struct, IConvertible, IComparable
-    {
-        public StateMachine(MonoBehaviour component) : base(component)
-        {
-        }
-    }
+	public class StateMachine<TState> : StateMachine<TState, StateMachineDriverDefault> where TState : struct, IConvertible, IComparable
+	{
+		public StateMachine(MonoBehaviour component) : base(component)
+		{
+		}
+	}
 
-    public class StateMachine<TState, TDriver> : IStateMachine<TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
-    {
-        public event Action<TState> Changed;
+	public class StateMachine<TState, TDriver> : IStateMachine<TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
+	{
+		public event Action<TState> Changed;
 
-        private MonoBehaviour component;
+		private MonoBehaviour component;
 
-        private StateMapping<TState, TDriver> lastState;
-        private StateMapping<TState, TDriver> currentState;
-        private StateMapping<TState, TDriver> destinationState;
-        private TDriver fallBackDriver;
+		private StateMapping<TState, TDriver> lastState;
+		private StateMapping<TState, TDriver> currentState;
+		private StateMapping<TState, TDriver> destinationState;
+		private TDriver fallBackDriver;
 
-        private Dictionary<object, StateMapping<TState, TDriver>> stateLookup;
+		private Dictionary<object, StateMapping<TState, TDriver>> stateLookup;
 
-        private bool isInTransition = false;
-        private IEnumerator currentTransition;
-        private IEnumerator exitRoutine;
-        private IEnumerator enterRoutine;
-        private IEnumerator queuedChange;
+		private bool isInTransition = false;
+		private IEnumerator currentTransition;
+		private IEnumerator exitRoutine;
+		private IEnumerator enterRoutine;
+		private IEnumerator queuedChange;
 
-        private BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+		private BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 #region Initialization
 
-        public StateMachine(MonoBehaviour component)
-        {
-            this.component = component;
+		public StateMachine(MonoBehaviour component)
+		{
+			this.component = component;
 
-            //Define States
-            var enumValues = Enum.GetValues(typeof(TState));
-            if (enumValues.Length < 1)
-            {
-                throw new ArgumentException("Enum provided to Initialize must have at least 1 visible definition");
-            }
+			//Define States
+			var enumValues = Enum.GetValues(typeof(TState));
+			if (enumValues.Length < 1)
+			{
+				throw new ArgumentException("Enum provided to Initialize must have at least 1 visible definition");
+			}
 
-            //Find all items in Driver class
-            // public class Driver
-            // {
-            //     StateEvent Foo;        <- Selected
-            //     StateEvent<int> Boo;   <- Selected 
-            //     float x;               <- Throw exception
-            // }
-            List<FieldInfo> eventFields = GetFilteredFields(typeof(TDriver), "MonsterLove.StateMachine.StateEvent");
-            Dictionary<string, FieldInfo> eventFieldsLookup = CreateFieldsLookup(eventFields);
+			//Find all items in Driver class
+			// public class Driver
+			// {
+			//     StateEvent Foo;        <- Selected
+			//     StateEvent<int> Boo;   <- Selected 
+			//     float x;               <- Throw exception
+			// }
+			List<FieldInfo> eventFields = GetFilteredFields(typeof(TDriver), "MonsterLove.StateMachine.StateEvent");
+			Dictionary<string, FieldInfo> eventFieldsLookup = CreateFieldsLookup(eventFields);
 
 
-            // Create a state mapping for each state defined in the enum
-            stateLookup = CreateStateLookup(this, enumValues);
+			// Create a state mapping for each state defined in the enum
+			stateLookup = CreateStateLookup(this, enumValues);
 
-            // Ensures every field in the driver is initialised
-            // eg mapping.Driver = new Driver(){
-            //     StateEvent Foo = new StateEvent(mapping.TestInvokable)
-            //     StateEvent Bar = new StateEvent(mapping.TestInvokable)
-            // }
-            foreach (var kvp in stateLookup)
-            {
-                var mapping = kvp.Value;
-                mapping.driver = CreateDriver(mapping.TestInvokable, eventFields);
-            }
+			// Ensures every field in the driver is initialised
+			// eg mapping.Driver = new Driver(){
+			//     StateEvent Foo = new StateEvent(mapping.TestInvokable)
+			//     StateEvent Bar = new StateEvent(mapping.TestInvokable)
+			// }
+			foreach (var kvp in stateLookup)
+			{
+				var mapping = kvp.Value;
+				mapping.driver = CreateDriver(mapping.TestInvokable, eventFields);
+			}
 
-            //Collect methods in target component
-            MethodInfo[] methods = component.GetType().GetMethods(bindingFlags);
+			//Collect methods in target component
+			MethodInfo[] methods = component.GetType().GetMethods(bindingFlags);
 
-            //Bind methods to states
-            for (int i = 0; i < methods.Length; i++)
-            {
-                TState state;
-                string evtName;
-                if (!ParseName(methods[i], out state, out evtName))
-                {
-                    continue; //Skip methods where State_Event name convention could not be parsed
-                }
+			//Bind methods to states
+			for (int i = 0; i < methods.Length; i++)
+			{
+				TState state;
+				string evtName;
+				if (!ParseName(methods[i], out state, out evtName))
+				{
+					continue; //Skip methods where State_Event name convention could not be parsed
+				}
 
-                StateMapping<TState, TDriver> mapping = stateLookup[state];
+				StateMapping<TState, TDriver> mapping = stateLookup[state];
 
-                if (eventFieldsLookup.ContainsKey(evtName))
-                {
-                    //Bind methods defined in TDriver
-                    FieldInfo eventField = eventFieldsLookup[evtName];
-                    BindEvents(mapping, component, methods[i], eventField);
-                }
-                else
-                {
-                    //Bind Enter, Exit and Finally Methods
-                    BindEventsInternal(mapping, component, methods[i], evtName);
-                }
-            }
+				if (eventFieldsLookup.ContainsKey(evtName))
+				{
+					//Bind methods defined in TDriver
+					FieldInfo eventField = eventFieldsLookup[evtName];
+					BindEvents(mapping, component, methods[i], eventField);
+				}
+				else
+				{
+					//Bind Enter, Exit and Finally Methods
+					BindEventsInternal(mapping, component, methods[i], evtName);
+				}
+			}
 
-            //Create nil state mapping
-            currentState = null; // new StateMapping<TState, TDriver>(this, null);
-            Func<bool> func = () => false;
-            fallBackDriver = CreateDriver(func, eventFields);
-        }
+			//Create nil state mapping
+			currentState = null; // new StateMapping<TState, TDriver>(this, null);
+			Func<bool> func = () => false;
+			fallBackDriver = CreateDriver(func, eventFields);
+		}
 
-        static List<FieldInfo> GetFilteredFields(Type type, string searchTerm)
-        {
-            List<FieldInfo> list = new List<FieldInfo>();
+		static List<FieldInfo> GetFilteredFields(Type type, string searchTerm)
+		{
+			List<FieldInfo> list = new List<FieldInfo>();
 
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            for (int i = 0; i < fields.Length; i++)
-            {
-                FieldInfo item = fields[i];
-                if (item.FieldType.ToString().Contains(searchTerm))
-                {
-                    list.Add(item);
-                }
-                else
-                {
-                    throw new ArgumentException(string.Format("{0} contains unsupported type {1}", type, item.FieldType));
-                }
-            }
+			for (int i = 0; i < fields.Length; i++)
+			{
+				FieldInfo item = fields[i];
+				if (item.FieldType.ToString().Contains(searchTerm))
+				{
+					list.Add(item);
+				}
+				else
+				{
+					throw new ArgumentException(string.Format("{0} contains unsupported type {1}", type, item.FieldType));
+				}
+			}
 
-            return list;
-        }
+			return list;
+		}
 
-        static Dictionary<string, FieldInfo> CreateFieldsLookup(List<FieldInfo> fields)
-        {
-            var dict = new Dictionary<string, FieldInfo>();
+		static Dictionary<string, FieldInfo> CreateFieldsLookup(List<FieldInfo> fields)
+		{
+			var dict = new Dictionary<string, FieldInfo>();
 
-            for (int i = 0; i < fields.Count; i++)
-            {
-                FieldInfo item = fields[i];
+			for (int i = 0; i < fields.Count; i++)
+			{
+				FieldInfo item = fields[i];
 
-                dict.Add(item.Name, item);
-            }
+				dict.Add(item.Name, item);
+			}
 
-            return dict;
-        }
-        
-        static TDriver CreateDriver(Func<bool> callback, List<FieldInfo> fieldInfos)
-        {
-            if (fieldInfos == null)
-            {
-                throw new ArgumentException(string.Format("Arguments cannot be null. Mapping fieldInfos {0}", fieldInfos));
-            }
+			return dict;
+		}
+		
+		static TDriver CreateDriver(Func<bool> callback, List<FieldInfo> fieldInfos)
+		{
+			if (fieldInfos == null)
+			{
+				throw new ArgumentException(string.Format("Arguments cannot be null. Mapping fieldInfos {0}", fieldInfos));
+			}
 
-            TDriver driver = new TDriver();
+			TDriver driver = new TDriver();
 
-            for (int i = 0; i < fieldInfos.Count; i++)
-            {
-                //driver.Event = new StateEvent(callback)
-                FieldInfo fieldInfo = fieldInfos[i]; //Event
-                ConstructorInfo constructorInfo = fieldInfo.FieldType.GetConstructor(new Type[] {typeof(Func<bool>)}); //StateEvent(Func<Bool> testCallback)
-                object obj = constructorInfo.Invoke(new object[] {callback}); //obj = new StateEvent(callback);
-                fieldInfo.SetValue(driver, obj); //driver.Event = obj;
-            }
+			for (int i = 0; i < fieldInfos.Count; i++)
+			{
+				//driver.Event = new StateEvent(callback)
+				FieldInfo fieldInfo = fieldInfos[i]; //Event
+				ConstructorInfo constructorInfo = fieldInfo.FieldType.GetConstructor(new Type[] {typeof(Func<bool>)}); //StateEvent(Func<Bool> testCallback)
+				object obj = constructorInfo.Invoke(new object[] {callback}); //obj = new StateEvent(callback);
+				fieldInfo.SetValue(driver, obj); //driver.Event = obj;
+			}
 
-            return driver;
-        }
+			return driver;
+		}
 
-        static Dictionary<object, StateMapping<TState, TDriver>> CreateStateLookup(StateMachine<TState, TDriver> fsm, Array values)
-        {
-            var stateLookup = new Dictionary<object, StateMapping<TState, TDriver>>();
-            for (int i = 0; i < values.Length; i++)
-            {
-                var mapping = new StateMapping<TState, TDriver>(fsm, (TState) values.GetValue(i));
-                stateLookup.Add(mapping.state, mapping);
-            }
+		static Dictionary<object, StateMapping<TState, TDriver>> CreateStateLookup(StateMachine<TState, TDriver> fsm, Array values)
+		{
+			var stateLookup = new Dictionary<object, StateMapping<TState, TDriver>>();
+			for (int i = 0; i < values.Length; i++)
+			{
+				var mapping = new StateMapping<TState, TDriver>(fsm, (TState) values.GetValue(i));
+				stateLookup.Add(mapping.state, mapping);
+			}
 
-            return stateLookup;
-        }
+			return stateLookup;
+		}
 
-        static bool ParseName(MethodInfo methodInfo, out TState state, out string eventName)
-        {
-            state = default(TState);
-            eventName = null;
+		static bool ParseName(MethodInfo methodInfo, out TState state, out string eventName)
+		{
+			state = default(TState);
+			eventName = null;
 
-            if (methodInfo.GetCustomAttributes(typeof(CompilerGeneratedAttribute), true).Length != 0)
-            {
-                return false;
-            }
+			if (methodInfo.GetCustomAttributes(typeof(CompilerGeneratedAttribute), true).Length != 0)
+			{
+				return false;
+			}
 
-            string name = methodInfo.Name;
-            int index = name.IndexOf('_');
+			string name = methodInfo.Name;
+			int index = name.IndexOf('_');
 
-            //Ignore functions without an underscore
-            if (index < 0)
-            {
-                return false;
-            }
+			//Ignore functions without an underscore
+			if (index < 0)
+			{
+				return false;
+			}
 
-            string stateName = name.Substring(0, index);
-            eventName = name.Substring(index+1);
+			string stateName = name.Substring(0, index);
+			eventName = name.Substring(index+1);
 
-            try
-            {
-                state = (TState) Enum.Parse(typeof(TState), stateName);
-            }
-            catch (ArgumentException)
-            {
-                //Not an method as listed in the state enum
-                return false;
-            }
+			try
+			{
+				state = (TState) Enum.Parse(typeof(TState), stateName);
+			}
+			catch (ArgumentException)
+			{
+				//Not an method as listed in the state enum
+				return false;
+			}
 
-            return true;
-        }
+			return true;
+		}
 
-        static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, FieldInfo eventField)
-        {
-            //evt.AddListener(State_Method); //Do this cleaner?
-            var obj = eventField.GetValue(targetState.driver);
-            MethodInfo addMethodInfo = eventField.FieldType.GetMethod("AddListener");
-            var fi = eventField.FieldType.GetField("action", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, FieldInfo eventField)
+		{
+			//evt.AddListener(State_Method); //Do this cleaner?
+			var obj = eventField.GetValue(targetState.driver);
+			MethodInfo addMethodInfo = eventField.FieldType.GetMethod("AddListener");
+			var fi = eventField.FieldType.GetField("action", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            Delegate del = Delegate.CreateDelegate(fi.FieldType, component, method);
-            addMethodInfo.Invoke(obj, new object[] {del});
-        }
+			Delegate del = Delegate.CreateDelegate(fi.FieldType, component, method);
+			addMethodInfo.Invoke(obj, new object[] {del});
+		}
 
-        static void BindEventsInternal(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, string evtName)
-        {
-            switch (evtName)
-            {
-                case "Enter":
-                    if (method.ReturnType == typeof(IEnumerator))
-                    {
-                        targetState.hasEnterRoutine = true;
-                        targetState.EnterRoutine = CreateDelegate<Func<IEnumerator>>(method, component);
-                    }
-                    else
-                    {
-                        targetState.hasEnterRoutine = false;
-                        targetState.EnterCall = CreateDelegate<Action>(method, component);
-                    }
+		static void BindEventsInternal(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, string evtName)
+		{
+			switch (evtName)
+			{
+				case "Enter":
+					if (method.ReturnType == typeof(IEnumerator))
+					{
+						targetState.hasEnterRoutine = true;
+						targetState.EnterRoutine = CreateDelegate<Func<IEnumerator>>(method, component);
+					}
+					else
+					{
+						targetState.hasEnterRoutine = false;
+						targetState.EnterCall = CreateDelegate<Action>(method, component);
+					}
 
-                    break;
-                case "Exit":
-                    if (method.ReturnType == typeof(IEnumerator))
-                    {
-                        targetState.hasExitRoutine = true;
-                        targetState.ExitRoutine = CreateDelegate<Func<IEnumerator>>(method, component);
-                    }
-                    else
-                    {
-                        targetState.hasExitRoutine = false;
-                        targetState.ExitCall = CreateDelegate<Action>(method, component);
-                    }
+					break;
+				case "Exit":
+					if (method.ReturnType == typeof(IEnumerator))
+					{
+						targetState.hasExitRoutine = true;
+						targetState.ExitRoutine = CreateDelegate<Func<IEnumerator>>(method, component);
+					}
+					else
+					{
+						targetState.hasExitRoutine = false;
+						targetState.ExitCall = CreateDelegate<Action>(method, component);
+					}
 
-                    break;
-                case "Finally":
-                    targetState.Finally = CreateDelegate<Action>(method, component);
-                    break;
-            }
-        }
+					break;
+				case "Finally":
+					targetState.Finally = CreateDelegate<Action>(method, component);
+					break;
+			}
+		}
 
-        static V CreateDelegate<V>(MethodInfo method, Object target) where V : class
-        {
-            var ret = (Delegate.CreateDelegate(typeof(V), target, method) as V);
+		static V CreateDelegate<V>(MethodInfo method, Object target) where V : class
+		{
+			var ret = (Delegate.CreateDelegate(typeof(V), target, method) as V);
 
-            if (ret == null)
-            {
-                throw new ArgumentException("Unable to create delegate for method called " + method.Name);
-            }
+			if (ret == null)
+			{
+				throw new ArgumentException("Unable to create delegate for method called " + method.Name);
+			}
 
-            return ret;
-        }
+			return ret;
+		}
 
 #endregion
 
 #region ChangeStates
 
-        public void ChangeState(TState newState)
-        {
-            ChangeState(newState, StateTransition.Safe);
-        }
+		public void ChangeState(TState newState)
+		{
+			ChangeState(newState, StateTransition.Safe);
+		}
 
-        public void ChangeState(TState newState, StateTransition transition)
-        {
-            if (stateLookup == null)
-            {
-                throw new Exception("States have not been configured, please call initialized before trying to set state");
-            }
+		public void ChangeState(TState newState, StateTransition transition)
+		{
+			if (stateLookup == null)
+			{
+				throw new Exception("States have not been configured, please call initialized before trying to set state");
+			}
 
-            if (!stateLookup.ContainsKey(newState))
-            {
-                throw new Exception("No state with the name " + newState.ToString() + " can be found. Please make sure you are called the correct type the statemachine was initialized with");
-            }
+			if (!stateLookup.ContainsKey(newState))
+			{
+				throw new Exception("No state with the name " + newState.ToString() + " can be found. Please make sure you are called the correct type the statemachine was initialized with");
+			}
 
-            var nextState = stateLookup[newState];
+			var nextState = stateLookup[newState];
 
-            if (currentState == nextState) return;
+			if (currentState == nextState) return;
 
-            //Cancel any queued changes.
-            if (queuedChange != null)
-            {
-                component.StopCoroutine(queuedChange);
-                queuedChange = null;
-            }
+			//Cancel any queued changes.
+			if (queuedChange != null)
+			{
+				component.StopCoroutine(queuedChange);
+				queuedChange = null;
+			}
 
-            switch (transition)
-            {
-                //case StateMachineTransition.Blend:
-                //Do nothing - allows the state transitions to overlap each other. This is a dumb idea, as previous state might trigger new changes. 
-                //A better way would be to start the two couroutines at the same time. IE don't wait for exit before starting start.
-                //How does this work in terms of overwrite?
-                //Is there a way to make this safe, I don't think so? 
-                //break;
-                case StateTransition.Safe:
-                    if (isInTransition)
-                    {
-                        if (exitRoutine != null) //We are already exiting current state on our way to our previous target state
-                        {
-                            //Overwrite with our new target
-                            destinationState = nextState;
-                            return;
-                        }
+			switch (transition)
+			{
+				//case StateMachineTransition.Blend:
+				//Do nothing - allows the state transitions to overlap each other. This is a dumb idea, as previous state might trigger new changes. 
+				//A better way would be to start the two couroutines at the same time. IE don't wait for exit before starting start.
+				//How does this work in terms of overwrite?
+				//Is there a way to make this safe, I don't think so? 
+				//break;
+				case StateTransition.Safe:
+					if (isInTransition)
+					{
+						if (exitRoutine != null) //We are already exiting current state on our way to our previous target state
+						{
+							//Overwrite with our new target
+							destinationState = nextState;
+							return;
+						}
 
-                        if (enterRoutine != null) //We are already entering our previous target state. Need to wait for that to finish and call the exit routine.
-                        {
-                            //Damn, I need to test this hard
-                            queuedChange = WaitForPreviousTransition(nextState);
-                            component.StartCoroutine(queuedChange);
-                            return;
-                        }
-                    }
+						if (enterRoutine != null) //We are already entering our previous target state. Need to wait for that to finish and call the exit routine.
+						{
+							//Damn, I need to test this hard
+							queuedChange = WaitForPreviousTransition(nextState);
+							component.StartCoroutine(queuedChange);
+							return;
+						}
+					}
 
-                    break;
-                case StateTransition.Overwrite:
-                    if (currentTransition != null)
-                    {
-                        component.StopCoroutine(currentTransition);
-                    }
+					break;
+				case StateTransition.Overwrite:
+					if (currentTransition != null)
+					{
+						component.StopCoroutine(currentTransition);
+					}
 
-                    if (exitRoutine != null)
-                    {
-                        component.StopCoroutine(exitRoutine);
-                    }
+					if (exitRoutine != null)
+					{
+						component.StopCoroutine(exitRoutine);
+					}
 
-                    if (enterRoutine != null)
-                    {
-                        component.StopCoroutine(enterRoutine);
-                    }
+					if (enterRoutine != null)
+					{
+						component.StopCoroutine(enterRoutine);
+					}
 
-                    //Note: if we are currently in an EnterRoutine and Exit is also a routine, this will be skipped in ChangeToNewStateRoutine()
-                    break;
-            }
+					//Note: if we are currently in an EnterRoutine and Exit is also a routine, this will be skipped in ChangeToNewStateRoutine()
+					break;
+			}
 
 
-            if ((currentState != null && currentState.hasExitRoutine) || nextState.hasEnterRoutine)
-            {
-                isInTransition = true;
-                currentTransition = ChangeToNewStateRoutine(nextState, transition);
-                component.StartCoroutine(currentTransition);
-            }
-            else //Same frame transition, no coroutines are present
-            {
-                if (currentState != null)
-                {
-                    currentState.ExitCall();
-                    currentState.Finally();
-                }
+			if ((currentState != null && currentState.hasExitRoutine) || nextState.hasEnterRoutine)
+			{
+				isInTransition = true;
+				currentTransition = ChangeToNewStateRoutine(nextState, transition);
+				component.StartCoroutine(currentTransition);
+			}
+			else //Same frame transition, no coroutines are present
+			{
+				if (currentState != null)
+				{
+					currentState.ExitCall();
+					currentState.Finally();
+				}
 
-                lastState = currentState;
-                currentState = nextState;
-                if (currentState != null)
-                {
-                    currentState.EnterCall();
-                    if (Changed != null)
-                    {
-                        Changed((TState) currentState.state);
-                    }
-                }
+				lastState = currentState;
+				currentState = nextState;
+				if (currentState != null)
+				{
+					currentState.EnterCall();
+					if (Changed != null)
+					{
+						Changed((TState) currentState.state);
+					}
+				}
 
-                isInTransition = false;
-            }
-        }
+				isInTransition = false;
+			}
+		}
 
-        private IEnumerator ChangeToNewStateRoutine(StateMapping<TState, TDriver> newState, StateTransition transition)
-        {
-            destinationState = newState; //Cache this so that we can overwrite it and hijack a transition
+		private IEnumerator ChangeToNewStateRoutine(StateMapping<TState, TDriver> newState, StateTransition transition)
+		{
+			destinationState = newState; //Cache this so that we can overwrite it and hijack a transition
 
-            if (currentState != null)
-            {
-                if (currentState.hasExitRoutine)
-                {
-                    exitRoutine = currentState.ExitRoutine();
+			if (currentState != null)
+			{
+				if (currentState.hasExitRoutine)
+				{
+					exitRoutine = currentState.ExitRoutine();
 
-                    if (exitRoutine != null && transition != StateTransition.Overwrite) //Don't wait for exit if we are overwriting
-                    {
-                        yield return component.StartCoroutine(exitRoutine);
-                    }
+					if (exitRoutine != null && transition != StateTransition.Overwrite) //Don't wait for exit if we are overwriting
+					{
+						yield return component.StartCoroutine(exitRoutine);
+					}
 
-                    exitRoutine = null;
-                }
-                else
-                {
-                    currentState.ExitCall();
-                }
+					exitRoutine = null;
+				}
+				else
+				{
+					currentState.ExitCall();
+				}
 
-                currentState.Finally();
-            }
+				currentState.Finally();
+			}
 
-            lastState = currentState;
-            currentState = destinationState;
+			lastState = currentState;
+			currentState = destinationState;
 
-            if (currentState != null)
-            {
-                if (currentState.hasEnterRoutine)
-                {
-                    enterRoutine = currentState.EnterRoutine();
+			if (currentState != null)
+			{
+				if (currentState.hasEnterRoutine)
+				{
+					enterRoutine = currentState.EnterRoutine();
 
-                    if (enterRoutine != null)
-                    {
-                        yield return component.StartCoroutine(enterRoutine);
-                    }
+					if (enterRoutine != null)
+					{
+						yield return component.StartCoroutine(enterRoutine);
+					}
 
-                    enterRoutine = null;
-                }
-                else
-                {
-                    currentState.EnterCall();
-                }
+					enterRoutine = null;
+				}
+				else
+				{
+					currentState.EnterCall();
+				}
 
-                //Broadcast change only after enter transition has begun. 
-                if (Changed != null)
-                {
-                    Changed((TState) currentState.state);
-                }
-            }
+				//Broadcast change only after enter transition has begun. 
+				if (Changed != null)
+				{
+					Changed((TState) currentState.state);
+				}
+			}
 
-            isInTransition = false;
-        }
+			isInTransition = false;
+		}
 
-        IEnumerator WaitForPreviousTransition(StateMapping<TState, TDriver> nextState)
-        {
-            while (isInTransition)
-            {
-                yield return null;
-            }
+		IEnumerator WaitForPreviousTransition(StateMapping<TState, TDriver> nextState)
+		{
+			while (isInTransition)
+			{
+				yield return null;
+			}
 
-            ChangeState((TState) nextState.state);
-        }
+			ChangeState((TState) nextState.state);
+		}
 
 #endregion
 
-        public TState LastState
-        {
-            get
-            {
-                if (lastState == null) return default(TState);
+		public TState LastState
+		{
+			get
+			{
+				if (lastState == null) return default(TState);
 
-                return (TState) lastState.state;
-            }
-        }
+				return (TState) lastState.state;
+			}
+		}
 
-        public TState State
-        {
-            get { return (TState) currentState.state; }
-        }
+		public TState State
+		{
+			get { return (TState) currentState.state; }
+		}
 
-        public bool IsInTransition
-        {
-            get { return isInTransition; }
-        }
+		public bool IsInTransition
+		{
+			get { return isInTransition; }
+		}
 
-        internal bool IsCurrentState(StateMapping<TState, TDriver> mapping)
-        {
-            return currentState == mapping;
-        }
+		internal bool IsCurrentState(StateMapping<TState, TDriver> mapping)
+		{
+			return currentState == mapping;
+		}
 
-        public TDriver Driver
-        {
-            get
-            {
-                if (currentState == null)
-                {
-                    return fallBackDriver;
-                }
+		public TDriver Driver
+		{
+			get
+			{
+				if (currentState == null)
+				{
+					return fallBackDriver;
+				}
 
-                return currentState.driver;
-            }
-        }
+				return currentState.driver;
+			}
+		}
 
-        public MonoBehaviour Component
-        {
-            get { return component; }
-        }
+		public MonoBehaviour Component
+		{
+			get { return component; }
+		}
 
-        //Static Methods
+		//Static Methods
 
-        /// <summary>
-        /// Inspects a MonoBehaviour for state methods as defined by the supplied Enum, and returns a stateMachine instance used to transition states.
-        /// </summary>
-        /// <param name="component">The component with defined state methods</param>
-        /// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
-        public static StateMachine<TState> Initialize(MonoBehaviour component)
-        {
-            var engine = component.GetComponent<StateMachineRunner>();
-            if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
+		/// <summary>
+		/// Inspects a MonoBehaviour for state methods as defined by the supplied Enum, and returns a stateMachine instance used to transition states.
+		/// </summary>
+		/// <param name="component">The component with defined state methods</param>
+		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
+		public static StateMachine<TState> Initialize(MonoBehaviour component)
+		{
+			var engine = component.GetComponent<StateMachineRunner>();
+			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
-            return engine.Initialize<TState>(component);
-        }
+			return engine.Initialize<TState>(component);
+		}
 
-        /// <summary>
-        /// Inspects a MonoBehaviour for state methods as defined by the supplied Enum, and returns a stateMachine instance used to transition states. 
-        /// </summary>
-        /// <param name="component">The component with defined state methods</param>
-        /// <param name="startState">The default starting state</param>
-        /// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
-        public static StateMachine<TState> Initialize(MonoBehaviour component, TState startState)
-        {
-            var engine = component.GetComponent<StateMachineRunner>();
-            if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
+		/// <summary>
+		/// Inspects a MonoBehaviour for state methods as defined by the supplied Enum, and returns a stateMachine instance used to transition states. 
+		/// </summary>
+		/// <param name="component">The component with defined state methods</param>
+		/// <param name="startState">The default starting state</param>
+		/// <returns>A valid stateMachine instance to manage MonoBehaviour state transitions</returns>
+		public static StateMachine<TState> Initialize(MonoBehaviour component, TState startState)
+		{
+			var engine = component.GetComponent<StateMachineRunner>();
+			if (engine == null) engine = component.gameObject.AddComponent<StateMachineRunner>();
 
-            return engine.Initialize<TState>(component, startState);
-        }
-    }
+			return engine.Initialize<TState>(component, startState);
+		}
+	}
 
-    public class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
-    {
-        public TState state;
-        public TDriver driver;
+	public class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
+	{
+		public TState state;
+		public TDriver driver;
 
-        public bool hasEnterRoutine;
-        public Action EnterCall = StateMachineRunner.DoNothing;
-        public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
+		public bool hasEnterRoutine;
+		public Action EnterCall = StateMachineRunner.DoNothing;
+		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
 
-        public bool hasExitRoutine;
-        public Action ExitCall = StateMachineRunner.DoNothing;
-        public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
+		public bool hasExitRoutine;
+		public Action ExitCall = StateMachineRunner.DoNothing;
+		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
 
-        public Action Finally = StateMachineRunner.DoNothing;
+		public Action Finally = StateMachineRunner.DoNothing;
 
-        private StateMachine<TState, TDriver> fsm;
+		private StateMachine<TState, TDriver> fsm;
 
-        public StateMapping(StateMachine<TState, TDriver> fsm, TState state)
-        {
-            this.fsm = fsm;
-            this.state = state;
-            driver = new TDriver();
-        }
+		public StateMapping(StateMachine<TState, TDriver> fsm, TState state)
+		{
+			this.fsm = fsm;
+			this.state = state;
+			driver = new TDriver();
+		}
 
-        public bool TestInvokable()
-        {
-            if (fsm.IsInTransition)
-            {
-                return false;
-            }
+		public bool TestInvokable()
+		{
+			if (fsm.IsInTransition)
+			{
+				return false;
+			}
 
-            if (!fsm.IsCurrentState(this))
-            {
-                return false;
-            }
+			if (!fsm.IsCurrentState(this))
+			{
+				return false;
+			}
 
-            return true;
-        }
-    }
+			return true;
+		}
+	}
 }
