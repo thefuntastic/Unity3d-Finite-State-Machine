@@ -60,6 +60,7 @@ namespace MonsterLove.StateMachine
         private StateMapping<TState, TDriver> lastState;
         private StateMapping<TState, TDriver> currentState;
         private StateMapping<TState, TDriver> destinationState;
+        private TDriver fallBackDriver;
 
         private Dictionary<object, StateMapping<TState, TDriver>> stateLookup;
 
@@ -106,7 +107,7 @@ namespace MonsterLove.StateMachine
             foreach (var kvp in stateLookup)
             {
                 var mapping = kvp.Value;
-                mapping.driver = CreateDriver(mapping, eventFields);
+                mapping.driver = CreateDriver(mapping.TestInvokable, eventFields);
             }
 
             //Collect methods in target component
@@ -139,6 +140,8 @@ namespace MonsterLove.StateMachine
 
             //Create nil state mapping
             currentState = null; // new StateMapping<TState, TDriver>(this, null);
+            Func<bool> func = () => false;
+            fallBackDriver = CreateDriver(func, eventFields);
         }
 
         static List<FieldInfo> GetFilteredFields(Type type, string searchTerm)
@@ -176,25 +179,22 @@ namespace MonsterLove.StateMachine
 
             return dict;
         }
-
-        static TDriver CreateDriver(StateMapping<TState, TDriver> mapping, List<FieldInfo> fieldInfos)
+        
+        static TDriver CreateDriver(Func<bool> callback, List<FieldInfo> fieldInfos)
         {
-            if (mapping == null || fieldInfos == null)
+            if (fieldInfos == null)
             {
-                throw new ArgumentException(string.Format("Arguments cannot be null. Mapping {0} fieldInfos {1}", mapping, fieldInfos));
+                throw new ArgumentException(string.Format("Arguments cannot be null. Mapping fieldInfos {0}", fieldInfos));
             }
 
             TDriver driver = new TDriver();
 
             for (int i = 0; i < fieldInfos.Count; i++)
             {
-                //driver.Event = new StateEvent(targetState.TestInvokable)
+                //driver.Event = new StateEvent(callback)
                 FieldInfo fieldInfo = fieldInfos[i]; //Event
-                MethodInfo sourceMethodInfo = mapping.GetType().GetMethod("TestInvokable"); //mapping.TestInvokable
-                Delegate del = Delegate.CreateDelegate(typeof(Func<bool>), mapping, sourceMethodInfo);
-
                 ConstructorInfo constructorInfo = fieldInfo.FieldType.GetConstructor(new Type[] {typeof(Func<bool>)}); //StateEvent(Func<Bool> testCallback)
-                object obj = constructorInfo.Invoke(new object[] {del}); //obj = new StateEvent(del);
+                object obj = constructorInfo.Invoke(new object[] {callback}); //obj = new StateEvent(callback);
                 fieldInfo.SetValue(driver, obj); //driver.Event = obj;
             }
 
@@ -516,10 +516,10 @@ namespace MonsterLove.StateMachine
             {
                 if (currentState == null)
                 {
-                    return null;
+                    return fallBackDriver;
                 }
 
-                return (TDriver) currentState.driver;
+                return currentState.driver;
             }
         }
 
