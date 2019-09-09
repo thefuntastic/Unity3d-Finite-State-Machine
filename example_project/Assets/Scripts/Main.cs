@@ -32,14 +32,14 @@ public class Main : MonoBehaviour
 
 	void Update()
 	{
-		fsm.Driver.Update.Send();
+		fsm.Driver.Update.Invoke();
 	}
 
 	void OnGUI()
 	{
 		GUILayout.BeginArea(new Rect(50,50,120,40));
-		
-		fsm.Driver.OnGUI.Send();
+
+		fsm.Driver.OnGUI.Invoke();
 		
 		GUILayout.EndArea();
 	}

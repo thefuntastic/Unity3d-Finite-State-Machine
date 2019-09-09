@@ -1,11 +1,12 @@
 ﻿using System;
+using MonsterLove.StateMachine;
 
 namespace MonsterLove.StateMachine
 {
     public class StateMachineDriverDefault : StateMachineDriver
     {
-        public Action FixedUpdate;
-        public Action Update;
-        public Action LateUpdate;
+        public StateEvent FixedUpdate;
+        public StateEvent Update;
+        public StateEvent LateUpdate;
     }
 }

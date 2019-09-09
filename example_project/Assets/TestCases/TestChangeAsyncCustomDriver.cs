@@ -84,7 +84,7 @@ namespace Tests
 
             void Update()
             {
-                fsm.Send(fsm.Driver.Update);
+                fsm.Driver.Update.Invoke();
             }
 
             IEnumerator One_Enter()

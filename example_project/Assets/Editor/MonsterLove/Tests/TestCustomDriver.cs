@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections;
-using MonsterLove.StateMachine;
+﻿using MonsterLove.StateMachine;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.TestTools;
-using Object = UnityEngine.Object;
 
 public class TestCustomDriver
 {
@@ -19,9 +14,9 @@ public class TestCustomDriver
 
     public class CustomDriver : StateMachineDriver
     {
-        public Action Foo;
-        public Action<int> Bar;
-        public Action<int, int> Baz;
+        public StateEvent Foo;
+        public StateEvent<int> Bar;
+        public StateEvent<int, int> Baz;
     }
 
     private GameObject go;
@@ -48,9 +43,9 @@ public class TestCustomDriver
     {
         fsm.ChangeState(States.One);
 
-        fsm.Send(fsm.Driver.Foo);
-        fsm.Send(fsm.Driver.Bar, 5);
-        fsm.Send(fsm.Driver.Baz, 6, 7);
+        fsm.Driver.Foo.Invoke();
+        fsm.Driver.Bar.Invoke(5);
+        fsm.Driver.Baz.Invoke(6, 7);
 
         Assert.AreEqual(1, behaviour.oneFoo);
         Assert.AreEqual(1, behaviour.oneBar);
@@ -68,9 +63,9 @@ public class TestCustomDriver
 
         fsm.ChangeState(States.Two);
 
-        fsm.Send(fsm.Driver.Foo);
-        fsm.Send(fsm.Driver.Bar, 8);
-        fsm.Send(fsm.Driver.Baz, 9, 10);
+        fsm.Driver.Foo.Invoke();
+        fsm.Driver.Bar.Invoke(8);
+        fsm.Driver.Baz.Invoke(9, 10);
 
         Assert.AreEqual(1, behaviour.oneFoo);
         Assert.AreEqual(1, behaviour.oneBar);
