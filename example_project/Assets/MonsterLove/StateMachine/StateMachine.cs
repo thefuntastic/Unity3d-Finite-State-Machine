@@ -26,7 +26,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using Object = System.Object;
 
@@ -72,6 +71,8 @@ namespace MonsterLove.StateMachine
 
         private BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+#region Initialization
+
         public StateMachine(MonoBehaviour component)
         {
             this.component = component;
@@ -96,7 +97,7 @@ namespace MonsterLove.StateMachine
 
             // Create a state mapping for each state defined in the enum
             stateLookup = CreateStateLookup(this, enumValues);
-            
+
             // Ensures every field in the driver is initialised
             // eg mapping.Driver = new Driver(){
             //     StateEvent Foo = new StateEvent(mapping.TestInvokable)
@@ -110,97 +111,35 @@ namespace MonsterLove.StateMachine
 
             //Collect methods in target component
             MethodInfo[] methods = component.GetType().GetMethods(bindingFlags);
-            
+
             //Bind methods to states
-            var separator = "_".ToCharArray();
             for (int i = 0; i < methods.Length; i++)
             {
-                if (methods[i].GetCustomAttributes(typeof(CompilerGeneratedAttribute), true).Length != 0)
+                TState state;
+                string evtName;
+                if (!ParseName(methods[i], out state, out evtName))
                 {
-                    continue;
+                    continue; //Skip methods where State_Event name convention could not be parsed
                 }
 
-                //TODO change this to index based lookup 
-                //means instead of splitting all underscores, we only split the first one
-                string[] names = methods[i].Name.Split(separator);
+                StateMapping<TState, TDriver> mapping = stateLookup[state];
 
-                //Ignore functions without an underscore
-                if (names.Length <= 1)
+                if (eventFieldsLookup.ContainsKey(evtName))
                 {
-                    continue;
+                    //Bind methods defined in TDriver
+                    FieldInfo eventField = eventFieldsLookup[evtName];
+                    BindEvents(mapping, component, methods[i], eventField);
                 }
-
-                string stateName = names[0];
-                string eventName = names[1];
-
-                Enum key;
-                try
+                else
                 {
-                    key = (Enum) Enum.Parse(typeof(TState), stateName);
-                }
-                catch (ArgumentException)
-                {
-                    //Not an method as listed in the state enum
-                    continue;
-                }
-
-                StateMapping<TState, TDriver> targetState = stateLookup[key];
-
-                if (eventFieldsLookup.ContainsKey(eventName))
-                {
-                    FieldInfo fieldInfo = eventFieldsLookup[eventName];
-
-                    //evt.AddListener(State_Method); //Do this cleaner?
-                    var obj = fieldInfo.GetValue(targetState.driver);
-                    MethodInfo addMethodInfo = fieldInfo.FieldType.GetMethod("AddListener");
-                    var fi = fieldInfo.FieldType.GetField("action", bindingFlags);
-
-                    Delegate del = Delegate.CreateDelegate(fi.FieldType, component, methods[i]);
-                    addMethodInfo.Invoke(obj, new object[] {del});
-
-                    continue;
-                }
-
-                switch (names[1])
-                {
-                    case "Enter":
-                        if (methods[i].ReturnType == typeof(IEnumerator))
-                        {
-                            targetState.hasEnterRoutine = true;
-                            targetState.EnterRoutine = CreateDelegate<Func<IEnumerator>>(methods[i], component);
-                        }
-                        else
-                        {
-                            targetState.hasEnterRoutine = false;
-                            targetState.EnterCall = CreateDelegate<Action>(methods[i], component);
-                        }
-
-                        break;
-                    case "Exit":
-                        if (methods[i].ReturnType == typeof(IEnumerator))
-                        {
-                            targetState.hasExitRoutine = true;
-                            targetState.ExitRoutine = CreateDelegate<Func<IEnumerator>>(methods[i], component);
-                        }
-                        else
-                        {
-                            targetState.hasExitRoutine = false;
-                            targetState.ExitCall = CreateDelegate<Action>(methods[i], component);
-                        }
-
-                        break;
-                    case "Finally":
-                        targetState.Finally = CreateDelegate<Action>(methods[i], component);
-                        break;
+                    //Bind Enter, Exit and Finally Methods
+                    BindEventsInternal(mapping, component, methods[i], evtName);
                 }
             }
 
             //Create nil state mapping
             currentState = null; // new StateMapping<TState, TDriver>(this, null);
         }
-        
-#region Initialization
-        
 
         static List<FieldInfo> GetFilteredFields(Type type, string searchTerm)
         {
@@ -274,7 +213,89 @@ namespace MonsterLove.StateMachine
             return stateLookup;
         }
 
-        private V CreateDelegate<V>(MethodInfo method, Object target) where V : class
+        static bool ParseName(MethodInfo methodInfo, out TState state, out string eventName)
+        {
+            state = default(TState);
+            eventName = null;
+
+            if (methodInfo.GetCustomAttributes(typeof(CompilerGeneratedAttribute), true).Length != 0)
+            {
+                return false;
+            }
+
+            string name = methodInfo.Name;
+            int index = name.IndexOf('_');
+
+            //Ignore functions without an underscore
+            if (index < 0)
+            {
+                return false;
+            }
+
+            string stateName = name.Substring(0, index);
+            eventName = name.Substring(index+1);
+
+            try
+            {
+                state = (TState) Enum.Parse(typeof(TState), stateName);
+            }
+            catch (ArgumentException)
+            {
+                //Not an method as listed in the state enum
+                return false;
+            }
+
+            return true;
+        }
+
+        static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, FieldInfo eventField)
+        {
+            //evt.AddListener(State_Method); //Do this cleaner?
+            var obj = eventField.GetValue(targetState.driver);
+            MethodInfo addMethodInfo = eventField.FieldType.GetMethod("AddListener");
+            var fi = eventField.FieldType.GetField("action", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            Delegate del = Delegate.CreateDelegate(fi.FieldType, component, method);
+            addMethodInfo.Invoke(obj, new object[] {del});
+        }
+
+        static void BindEventsInternal(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, string evtName)
+        {
+            switch (evtName)
+            {
+                case "Enter":
+                    if (method.ReturnType == typeof(IEnumerator))
+                    {
+                        targetState.hasEnterRoutine = true;
+                        targetState.EnterRoutine = CreateDelegate<Func<IEnumerator>>(method, component);
+                    }
+                    else
+                    {
+                        targetState.hasEnterRoutine = false;
+                        targetState.EnterCall = CreateDelegate<Action>(method, component);
+                    }
+
+                    break;
+                case "Exit":
+                    if (method.ReturnType == typeof(IEnumerator))
+                    {
+                        targetState.hasExitRoutine = true;
+                        targetState.ExitRoutine = CreateDelegate<Func<IEnumerator>>(method, component);
+                    }
+                    else
+                    {
+                        targetState.hasExitRoutine = false;
+                        targetState.ExitCall = CreateDelegate<Action>(method, component);
+                    }
+
+                    break;
+                case "Finally":
+                    targetState.Finally = CreateDelegate<Action>(method, component);
+                    break;
+            }
+        }
+
+        static V CreateDelegate<V>(MethodInfo method, Object target) where V : class
         {
             var ret = (Delegate.CreateDelegate(typeof(V), target, method) as V);
 
@@ -285,7 +306,7 @@ namespace MonsterLove.StateMachine
 
             return ret;
         }
-        
+
 #endregion
 
 #region ChangeStates
