@@ -182,9 +182,9 @@ namespace MonsterLove.StateMachine
 		
 		static TDriver CreateDriver(Func<bool> callback, List<FieldInfo> fieldInfos)
 		{
-			if (fieldInfos == null)
+			if (callback == null || fieldInfos == null)
 			{
-				throw new ArgumentException(string.Format("Arguments cannot be null. Mapping fieldInfos {0}", fieldInfos));
+				throw new ArgumentException(string.Format("Arguments cannot be null. Callback {0} fieldInfos {1}", callback, fieldInfos));
 			}
 
 			TDriver driver = new TDriver();
