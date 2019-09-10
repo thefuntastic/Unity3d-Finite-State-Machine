@@ -251,12 +251,13 @@ namespace MonsterLove.StateMachine
 		static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, FieldInfo eventField)
 		{
 			//evt.AddListener(State_Method); 
-			var obj = eventFieldInfo.GetValue(targetState.driver); //driver.Foo
-			MethodInfo addMethodInfo = eventFieldInfo.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
-			var actionTypeFieldInfo = eventFieldInfo.FieldType.GetField("actionType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);  //driver.Foo.actionType
-			Type actionType = (Type) actionTypeFieldInfo.GetValue(obj);  //typeof(Action<T1,T2,...TN>) = driver.Foo.actionType 
+			var obj = driverEvtDef.GetValue(targetState.driver); //driver.Foo
+			MethodInfo addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
+			
+			var genericTypes = driverEvtDef.FieldType.GetGenericArguments(); //get T1,T2,...TN from StateEvent<T1,T2,...TN>
+			var actionType = GetActionType(genericTypes); //typeof(Action<T1,T2,...TN>)
 
-			Delegate del = Delegate.CreateDelegate(actionType, component, method);
+			Delegate del = Delegate.CreateDelegate(actionType, component, stateTargetDef);
 			addMethodInfo.Invoke(obj, new object[] {del}); //driver.Foo.AddListener(component.State_Event);
 		}
 
@@ -308,6 +309,37 @@ namespace MonsterLove.StateMachine
 			return ret;
 		}
 
+		static Type GetDispatcherType(Type[] genericArgs)
+		{
+			Type[] concatenatedArgs = new Type[] {typeof(TState)};
+			concatenatedArgs = concatenatedArgs.Concat(genericArgs).ToArray();
+			switch (concatenatedArgs.Length)
+			{
+				case 1:
+					return typeof(StateDispatcher<>).MakeGenericType(concatenatedArgs);
+				case 2:
+					return typeof(StateDispatcher<,>).MakeGenericType(concatenatedArgs);
+				case 3:
+					return typeof(StateDispatcher<,,>).MakeGenericType(concatenatedArgs);
+				default:
+					throw new ArgumentOutOfRangeException(string.Format("Cannot create StateDispatcher Type with {0} type arguments", genericArgs.Length));
+			}
+		}
+
+		static Type GetActionType(Type[] genericArgs)
+		{
+			switch (genericArgs.Length)
+			{
+				case 0:
+					return typeof(Action);
+				case 1:
+					return typeof(Action<>).MakeGenericType(genericArgs);
+				case 2:
+					return typeof(Action<,>).MakeGenericType(genericArgs);
+				default:
+					throw new ArgumentOutOfRangeException(string.Format("Cannot create Action Type with {0} type arguments", genericArgs.Length));
+			}
+		}
 #endregion
 
 #region ChangeStates
