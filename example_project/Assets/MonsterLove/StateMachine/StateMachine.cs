@@ -250,13 +250,14 @@ namespace MonsterLove.StateMachine
 
 		static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, FieldInfo eventField)
 		{
-			//evt.AddListener(State_Method); //Do this cleaner?
-			var obj = eventField.GetValue(targetState.driver);
-			MethodInfo addMethodInfo = eventField.FieldType.GetMethod("AddListener");
-			var fi = eventField.FieldType.GetField("action", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			//evt.AddListener(State_Method); 
+			var obj = eventFieldInfo.GetValue(targetState.driver); //driver.Foo
+			MethodInfo addMethodInfo = eventFieldInfo.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
+			var actionTypeFieldInfo = eventFieldInfo.FieldType.GetField("actionType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);  //driver.Foo.actionType
+			Type actionType = (Type) actionTypeFieldInfo.GetValue(obj);  //typeof(Action<T1,T2,...TN>) = driver.Foo.actionType 
 
-			Delegate del = Delegate.CreateDelegate(fi.FieldType, component, method);
-			addMethodInfo.Invoke(obj, new object[] {del});
+			Delegate del = Delegate.CreateDelegate(actionType, component, method);
+			addMethodInfo.Invoke(obj, new object[] {del}); //driver.Foo.AddListener(component.State_Event);
 		}
 
 		static void BindEventsInternal(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, string evtName)

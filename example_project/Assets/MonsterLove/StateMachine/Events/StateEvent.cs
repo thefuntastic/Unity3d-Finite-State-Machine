@@ -5,8 +5,8 @@ namespace MonsterLove.StateMachine
 {
     public class StateEvent
     {
-        private Action action;
         private Func<bool> isInvokableTest;
+        private Type actionType = typeof(Action);
         private List<Action> calls = new List<Action>();
         
         public StateEvent(Func<bool> isInvokableTest)
@@ -56,7 +56,7 @@ namespace MonsterLove.StateMachine
     public class StateEvent<T>
     {
         private Func<bool> isInvokableTest;
-        private Action<T> action;
+        private Type actionType = typeof(Action<T>);
         private List<Action<T>> calls = new List<Action<T>>();
         
         public StateEvent(Func<bool> isInvokableTest)
@@ -107,7 +107,7 @@ namespace MonsterLove.StateMachine
     public class StateEvent<T1, T2>
     {
         private Func<bool> isInvokableTest;
-        private Action<T1,T2> action;
+        private Type actionType = typeof(Action<T1,T2>);
         private List<Action<T1, T2>> calls = new List<Action<T1, T2>>();
         
         public StateEvent(Func<bool> isInvokableTest)
