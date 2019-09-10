@@ -306,7 +306,16 @@ namespace MonsterLove.StateMachine
 			var genericTypes = driverEvtDef.FieldType.GetGenericArguments(); //get T1,T2,...TN from StateEvent<T1,T2,...TN>
 			var actionType = GetActionType(genericTypes); //typeof(Action<T1,T2,...TN>)
 
-			Delegate del = Delegate.CreateDelegate(actionType, component, stateTargetDef);
+			Delegate del = null;
+			try
+			{
+				del = Delegate.CreateDelegate(actionType, component, stateTargetDef);
+			}
+			catch (ArgumentException)
+			{
+				throw new ArgumentException(string.Format("State ({0}_{1}) requires a callback of type: {2}, type found: {3}", targetState.state, driverEvtDef.Name, actionType, stateTargetDef));
+			}
+			
 			addMethodInfo.Invoke(obj, new object[] {del}); //driver.Foo.AddListener(component.State_Event);
 		}
 
