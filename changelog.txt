@@ -1,5 +1,5 @@
 v4.0 August 2019
-	*StateMachine now accepts a Driver class, a power convention for user generated state events that tie state events to the lifecycle of a monobehaviour and offer better performance. 
+	*StateMachine now accepts a Driver class, a powerful convention for user generated state events that ties FSM to the lifecycle of a monobehaviour and offers better performance. 
 	*Modernised unit tests for Unity Test Runner
 	*Compenents deriving from a super class will now also search super classes for state methods
 	*Added LastState property to StateMachine class
