@@ -580,13 +580,18 @@ namespace MonsterLove.StateMachine
 
 #endregion
 
+		public bool LastStateExists
+		{
+			get { return lastState != null; }
+		}
+		
 		public TState LastState
 		{
 			get
 			{
-				if (currentState == null)
+				if (lastState == null)
 				{
-					throw new Exception("aldfkja;ldskj");
+					throw new NullReferenceException("LastState cannot be accessed before ChangeState() has been called at least twice");
 				}
 
 				return (TState) lastState.state;
@@ -597,6 +602,11 @@ namespace MonsterLove.StateMachine
 		{
 			get
 			{
+				if (currentState == null)
+				{
+					throw new NullReferenceException("State cannot be accessed before ChangeState() has been called at least once");
+				}
+				
 				return (TState) currentState.state;
 			}
 		}

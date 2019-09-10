@@ -30,7 +30,6 @@ public class TestStateEngineInitialization
 		go = new GameObject("stateTest");
 		behaviour = go.AddComponent<ClassWithBasicStates>();
 		engine = go.AddComponent<StateMachineRunner>();
-		
 	}
 
 	[TearDown]
@@ -53,6 +52,49 @@ public class TestStateEngineInitialization
 		Assert.Throws<ArgumentException>(
 					  () => { engine.Initialize<TestNoDefines>(behaviour); }
 					 );
+	}
+
+	[Test]
+	public void TestStatePropBeforeChange()
+	{
+		var fsm = new StateMachine<TestStates, StateMachineDriverUnity>(behaviour);
+		
+		Assert.Throws<NullReferenceException>(() =>
+		{
+			TestStates state = fsm.State;
+		});
+		
+		fsm.ChangeState(TestStates.StateInit);
+		
+		Assert.AreEqual(TestStates.StateInit, fsm.State);
+	}
+	
+	[Test]
+	public void TestLastStatePropBeforeChange()
+	{
+		var fsm = new StateMachine<TestStates, StateMachineDriverUnity>(behaviour);
+		
+		Assert.Throws<NullReferenceException>(() =>
+		{
+			TestStates state = fsm.LastState;
+		});
+		Assert.IsFalse(fsm.LastStateExists);
+		
+		
+		fsm.ChangeState(TestStates.StateInit);
+		
+		//Conflicted about this. Prefer to return default values, or the current state
+		//but that would undermine correctness
+		Assert.Throws<NullReferenceException>(() =>
+		{
+			TestStates state = fsm.LastState;
+		});
+		Assert.IsFalse(fsm.LastStateExists);
+		
+		fsm.ChangeState(TestStates.StatePlay);
+		
+		Assert.AreEqual(TestStates.StateInit, fsm.LastState);
+		Assert.IsTrue(fsm.LastStateExists);
 	}
 }	
 
