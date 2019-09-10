@@ -12,7 +12,7 @@ public class TestCustomDriver
 		Four,
 	}
 
-	public class CustomDriver : StateMachineDriver
+	public class Driver
 	{
 		public StateEvent Foo;
 		public StateEvent<int> Bar;
@@ -21,7 +21,7 @@ public class TestCustomDriver
 
 	private GameObject go;
 	private StateClass behaviour;
-	private StateMachine<States, CustomDriver> fsm;
+	private StateMachine<States, Driver> fsm;
 
 	[SetUp]
 	public void Init()
@@ -29,13 +29,19 @@ public class TestCustomDriver
 		go = new GameObject();
 		behaviour = go.AddComponent<StateClass>();
 
-		fsm = new StateMachine<States, CustomDriver>(behaviour);
+		fsm = new StateMachine<States, Driver>(behaviour);
 	}
 
 	[TearDown]
 	public void Kill()
 	{
 		Object.DestroyImmediate(go);
+	}
+
+	[Test]
+	public void TestDriverNotNull()
+	{
+		Assert.NotNull(fsm.Driver);
 	}
 
 	[Test]
