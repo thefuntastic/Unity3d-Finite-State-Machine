@@ -24,6 +24,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -60,7 +61,7 @@ namespace MonsterLove.StateMachine
 		private StateMapping<TState, TDriver> lastState;
 		private StateMapping<TState, TDriver> currentState;
 		private StateMapping<TState, TDriver> destinationState;
-		private TDriver fallBackDriver;
+		private TDriver rootDriver;
 
 		private Dictionary<object, StateMapping<TState, TDriver>> stateLookup;
 
@@ -70,7 +71,7 @@ namespace MonsterLove.StateMachine
 		private IEnumerator enterRoutine;
 		private IEnumerator queuedChange;
 
-		private BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+		private static BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 #region Initialization
 
@@ -108,6 +109,7 @@ namespace MonsterLove.StateMachine
 			{
 				var mapping = kvp.Value;
 				mapping.driver = CreateDriver(mapping.TestInvokable, eventFields);
+				
 			}
 
 			//Collect methods in target component
@@ -129,7 +131,7 @@ namespace MonsterLove.StateMachine
 				{
 					//Bind methods defined in TDriver
 					FieldInfo eventField = eventFieldsLookup[evtName];
-					BindEvents(mapping, component, methods[i], eventField);
+					BindEvents(mapping, component, methods[i], eventField); //Todo, won't be necessary any more
 				}
 				else
 				{
@@ -140,8 +142,33 @@ namespace MonsterLove.StateMachine
 
 			//Create nil state mapping
 			currentState = null; // new StateMapping<TState, TDriver>(this, null);
-			Func<bool> func = () => false;
-			fallBackDriver = CreateDriver(func, eventFields);
+			Func<bool> func = () =>
+			{
+				if (currentState == null)
+				{
+					return false;
+				}
+				
+				if (IsInTransition)
+				{
+					return false;
+				}
+
+				return true;
+			};
+			
+			//This is a head hurter: 
+			//rootDriver.Foo<T> -> dispatcher -> __Mapping<States.One>.Driver.Foo.Invoke
+			//						  			 \_Mapping<States.Two>.Driver.Foo.Invoke
+			//									 \_Mapping<States.Three>.Driver.Foo.Invoke
+			// 
+			// basically we create and bind a dispatcher to our permanent root driver. This then routes events to each state mapping
+			rootDriver = CreateDriver(func, eventFields);
+			for (int i = 0; i < eventFields.Count; i++)
+			{
+				var driverEventDef = eventFields[i];
+				BindDispatcher(stateLookup, rootDriver, driverEventDef, GetState);
+			}
 		}
 
 		static List<FieldInfo> GetFilteredFields(Type type, string searchTerm)
@@ -201,6 +228,41 @@ namespace MonsterLove.StateMachine
 			return driver;
 		}
 
+		static void BindDispatcher(Dictionary<object, StateMapping<TState, TDriver>> stateLookup, TDriver broadcaster, FieldInfo driverEvtDef, Func<TState> stateProvider)
+		{
+			var genericTypes = driverEvtDef.FieldType.GetGenericArguments();
+			var actionType = GetActionType(genericTypes);
+			
+			var dispatcherType = GetDispatcherType(genericTypes);
+			var constructorInfo = dispatcherType.GetConstructor(new Type[]{}); // StateDispatcher()
+			var stateProviderInfo = dispatcherType.GetField("stateProvider", bindingFlags); 
+			var dispatcherInvokeInfo = dispatcherType.GetMethod("Invoke"); //StateDispatcher.Invoke()
+			var listenerLookupInfo = dispatcherType.GetField("listenerLookup", bindingFlags);
+			var listenerLookupAddMethodInfo = listenerLookupInfo.FieldType.GetMethod("Add"); //Dictionary<TState, Action<TN>>.Add
+
+			var eventInvokeInfo = driverEvtDef.FieldType.GetMethod("Invoke"); //StateEvent.Invoke();
+
+			var dispatcher = constructorInfo.Invoke(new object[] { }); // dispatcher = new StateDispatcher()
+			
+			stateProviderInfo.SetValue(dispatcher, stateProvider); // dispatcher.stateProvider = (Func<TState>) stateProvider
+			
+			foreach(var kvp in stateLookup)
+			{
+				var stateMapping = kvp.Value;
+
+				var listenerLookup = listenerLookupInfo.GetValue(dispatcher); // var listenerLookup = dispatcher.listenerLookup
+				var stateEvent = driverEvtDef.GetValue(stateMapping.driver); //var stateEvent = stateMapping.Driver.Foo;
+				var listener = Delegate.CreateDelegate(actionType, stateEvent, eventInvokeInfo); // (delegate) stateMapping.Driver.Foo.Invoke
+				
+				listenerLookupAddMethodInfo.Invoke(listenerLookup, new[] {kvp.Key, listener}); // listenerLookup.Add(state, stateMapping.Driver.Foo.Invoke)
+			}
+			
+			var addListenerInfo = driverEvtDef.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
+			var broadcasterStateEvent = driverEvtDef.GetValue(broadcaster); //var evt = driver.Foo;
+			Delegate del = Delegate.CreateDelegate(actionType, dispatcher, dispatcherInvokeInfo); // (delegate) dispatcher.Invoke
+			addListenerInfo.Invoke(broadcasterStateEvent, new object[] {del}); //driver.Foo.AddListener(dispatcher.Invoke)
+		}
+		
 		static Dictionary<object, StateMapping<TState, TDriver>> CreateStateLookup(StateMachine<TState, TDriver> fsm, Array values)
 		{
 			var stateLookup = new Dictionary<object, StateMapping<TState, TDriver>>();
@@ -248,11 +310,11 @@ namespace MonsterLove.StateMachine
 			return true;
 		}
 
-		static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, FieldInfo eventField)
+		static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo stateTargetDef, FieldInfo driverEvtDef)
 		{
 			//evt.AddListener(State_Method); 
 			var obj = driverEvtDef.GetValue(targetState.driver); //driver.Foo
-			MethodInfo addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
+			var addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
 			
 			var genericTypes = driverEvtDef.FieldType.GetGenericArguments(); //get T1,T2,...TN from StateEvent<T1,T2,...TN>
 			var actionType = GetActionType(genericTypes); //typeof(Action<T1,T2,...TN>)
@@ -522,7 +584,10 @@ namespace MonsterLove.StateMachine
 		{
 			get
 			{
-				if (lastState == null) return default(TState);
+				if (currentState == null)
+				{
+					throw new Exception("aldfkja;ldskj");
+				}
 
 				return (TState) lastState.state;
 			}
@@ -530,7 +595,20 @@ namespace MonsterLove.StateMachine
 
 		public TState State
 		{
-			get { return (TState) currentState.state; }
+			get
+			{
+				return (TState) currentState.state;
+			}
+		}
+
+		private TState GetState()
+		{
+			if (currentState == null)
+			{
+				throw new Exception("aldfkja;ldskj");
+			}
+			
+			return currentState.state;
 		}
 
 		public bool IsInTransition
@@ -545,22 +623,15 @@ namespace MonsterLove.StateMachine
 
 		public TDriver Driver
 		{
-			get
-			{
-				if (currentState == null)
-				{
-					return fallBackDriver;
-				}
-
-				return currentState.driver;
-			}
+			get { return rootDriver; }
 		}
 
 		public MonoBehaviour Component
 		{
 			get { return component; }
 		}
-
+		
+		
 		//Static Methods
 
 		/// <summary>

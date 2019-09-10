@@ -1,13 +1,14 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace MonsterLove.StateMachine
 {
-	public class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
+	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
 	{
 		public TState state;
 		public TDriver driver;
-
+		
 		public bool hasEnterRoutine;
 		public Action EnterCall = StateMachineRunner.DoNothing;
 		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;

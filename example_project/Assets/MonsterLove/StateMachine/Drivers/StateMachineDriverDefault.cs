@@ -3,7 +3,7 @@ using MonsterLove.StateMachine;
 
 namespace MonsterLove.StateMachine
 {
-	public class StateMachineDriverDefault : StateMachineDriver
+	public class StateMachineDriverDefault
 	{
 		public StateEvent FixedUpdate;
 		public StateEvent Update;
