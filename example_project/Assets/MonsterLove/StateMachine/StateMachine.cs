@@ -108,7 +108,7 @@ namespace MonsterLove.StateMachine
 			foreach (var kvp in stateLookup)
 			{
 				var mapping = kvp.Value;
-				mapping.driver = CreateDriver(mapping.TestInvokable, eventFields);
+				mapping.driver = CreateDriver(null, eventFields);
 				
 			}
 
@@ -141,21 +141,7 @@ namespace MonsterLove.StateMachine
 			}
 
 			//Create nil state mapping
-			currentState = null; // new StateMapping<TState, TDriver>(this, null);
-			Func<bool> func = () =>
-			{
-				if (currentState == null)
-				{
-					return false;
-				}
-				
-				if (IsInTransition)
-				{
-					return false;
-				}
-
-				return true;
-			};
+			currentState = null; 
 			
 			//This is a head hurter: 
 			//rootDriver.Foo<T> -> dispatcher -> __Mapping<States.One>.Driver.Foo.Invoke
@@ -163,7 +149,8 @@ namespace MonsterLove.StateMachine
 			//									 \_Mapping<States.Three>.Driver.Foo.Invoke
 			// 
 			// basically we create and bind a dispatcher to our permanent root driver. This then routes events to each state mapping
-			rootDriver = CreateDriver(func, eventFields);
+			// having a fixed permanent driver means client code always has a valid reference
+			rootDriver = CreateDriver(IsDispatchAllowed, eventFields);
 			for (int i = 0; i < eventFields.Count; i++)
 			{
 				var driverEventDef = eventFields[i];
@@ -206,10 +193,22 @@ namespace MonsterLove.StateMachine
 
 			return dict;
 		}
-		
+
+		static Dictionary<object, StateMapping<TState, TDriver>> CreateStateLookup(StateMachine<TState, TDriver> fsm, Array values)
+		{
+			var stateLookup = new Dictionary<object, StateMapping<TState, TDriver>>();
+			for (int i = 0; i < values.Length; i++)
+			{
+				var mapping = new StateMapping<TState, TDriver>(fsm, (TState) values.GetValue(i));
+				stateLookup.Add(mapping.state, mapping);
+			}
+
+			return stateLookup;
+		}
+
 		static TDriver CreateDriver(Func<bool> callback, List<FieldInfo> fieldInfos)
 		{
-			if (callback == null || fieldInfos == null)
+			if (fieldInfos == null)
 			{
 				throw new ArgumentException(string.Format("Arguments cannot be null. Callback {0} fieldInfos {1}", callback, fieldInfos));
 			}
@@ -261,18 +260,6 @@ namespace MonsterLove.StateMachine
 			var broadcasterStateEvent = driverEvtDef.GetValue(broadcaster); //var evt = driver.Foo;
 			Delegate del = Delegate.CreateDelegate(actionType, dispatcher, dispatcherInvokeInfo); // (delegate) dispatcher.Invoke
 			addListenerInfo.Invoke(broadcasterStateEvent, new object[] {del}); //driver.Foo.AddListener(dispatcher.Invoke)
-		}
-		
-		static Dictionary<object, StateMapping<TState, TDriver>> CreateStateLookup(StateMachine<TState, TDriver> fsm, Array values)
-		{
-			var stateLookup = new Dictionary<object, StateMapping<TState, TDriver>>();
-			for (int i = 0; i < values.Length; i++)
-			{
-				var mapping = new StateMapping<TState, TDriver>(fsm, (TState) values.GetValue(i));
-				stateLookup.Add(mapping.state, mapping);
-			}
-
-			return stateLookup;
 		}
 
 		static bool ParseName(MethodInfo methodInfo, out TState state, out string eventName)
@@ -580,11 +567,13 @@ namespace MonsterLove.StateMachine
 
 #endregion
 
+#region Properties & Helpers
+
 		public bool LastStateExists
 		{
 			get { return lastState != null; }
 		}
-		
+
 		public TState LastState
 		{
 			get
@@ -611,24 +600,9 @@ namespace MonsterLove.StateMachine
 			}
 		}
 
-		private TState GetState()
-		{
-			if (currentState == null)
-			{
-				throw new Exception("aldfkja;ldskj");
-			}
-			
-			return currentState.state;
-		}
-
 		public bool IsInTransition
 		{
 			get { return isInTransition; }
-		}
-
-		internal bool IsCurrentState(StateMapping<TState, TDriver> mapping)
-		{
-			return currentState == mapping;
 		}
 
 		public TDriver Driver
@@ -640,8 +614,33 @@ namespace MonsterLove.StateMachine
 		{
 			get { return component; }
 		}
+
+		//format as method so can be passed as Func<TState>
+		private TState GetState()
+		{
+			return State;
+		}
 		
+		private bool IsDispatchAllowed()
+		{
+			if (currentState == null)
+			{
+				return false;
+			}
+				
+			if (IsInTransition)
+			{
+				return false;
+			}
+
+			return true;
+		}
 		
+
+#endregion
+
+#region Static API
+
 		//Static Methods
 
 		/// <summary>
@@ -670,5 +669,7 @@ namespace MonsterLove.StateMachine
 
 			return engine.Initialize<TState>(component, startState);
 		}
+
+#endregion
 	}
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 
 namespace MonsterLove.StateMachine
 {
@@ -26,21 +25,6 @@ namespace MonsterLove.StateMachine
 			this.fsm = fsm;
 			this.state = state;
 			driver = new TDriver();
-		}
-
-		public bool TestInvokable()
-		{
-			if (fsm.IsInTransition)
-			{
-				return false;
-			}
-
-			if (!fsm.IsCurrentState(this))
-			{
-				return false;
-			}
-
-			return true;
 		}
 	}
 }
