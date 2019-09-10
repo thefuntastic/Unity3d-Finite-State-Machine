@@ -24,7 +24,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -369,8 +368,15 @@ namespace MonsterLove.StateMachine
 
 		static Type GetDispatcherType(Type[] genericArgs)
 		{
-			Type[] concatenatedArgs = new Type[] {typeof(TState)};
-			concatenatedArgs = concatenatedArgs.Concat(genericArgs).ToArray();
+			//convert <T1,T2...TN> to <TState,T1,T2...TN>
+			Type[] concatenatedArgs = new Type[genericArgs.Length + 1];
+			
+			concatenatedArgs[0] = typeof(TState);
+			for (int i = 0; i < genericArgs.Length; i++)
+			{
+				concatenatedArgs[i + 1] = genericArgs[i];
+			}
+			
 			switch (concatenatedArgs.Length)
 			{
 				case 1:
