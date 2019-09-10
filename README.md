@@ -1,21 +1,21 @@
 # Unity3D - Simple Finite State Machine (C#)
 
-State machines are a very effective way to manage game state, either on your main game play object (Game Over, Restart, Continue etc) or on individual actors and NPCs (AI behaviours, Animations, etc). The following is a simple state machine that should work well within any Unity context. 
+State machines are a very effective way to manage game state, either on your main game play object (Game Over, Restart, Continue etc) or UI (buttonHover, buttonPress etc) or on individual actors and NPCs (AI behaviours, Animations, etc). The following is a simple state machine that should work well within any Unity context. 
 
 ## Designed with simplicity in mind
 
 Most state machines come from the world of C# enterprise, and are wonderfully complicated or require a lot of boilerplate code. State Machines however are an incredibly useful pattern in game development, administrative overhead should never be a burden that discourages you from writing good code. 
 
 * Simple use of Enums as state definition. 
-* Minimal initialization - one line of code. 
-* Incredibly easy to add/remove states
+* Incredibly easy to define new states
+* Powerful driver templating to define your own state events
 * Uses reflection to avoid boiler plate code - only write the methods you actually need. 
 * Compatible with Coroutines.
 * Tested on iOS and Android
 
 ## Usage
 
-An example project is included (Unity 5.0) to show the State Machine in action.
+An example project is included (Unity 2018.3.7) to show the State Machine in action.
 
 To use the state machine you need a few simple steps
 
@@ -35,12 +35,23 @@ public class MyManagedComponent : MonoBehaviour
 ```C#
 public enum States
 {
-	Init, 
+    Init, 
     Play, 
     Win, 
     Lose
 }
 ```
+##### Define events applied to each state 
+
+```C#
+public class Driver
+{
+    StateEvent Update;
+    StateEvent<Collision> OnCollisionEnter; 
+    StateEvent<int> OnHealthPickup;
+}
+```
+
 ##### Create a variable to store a reference to the State Machine 
 
 ```C#
@@ -50,16 +61,35 @@ StateMachine<States> fsm;
 ##### Get a valid state machine for your MonoBehaviour
 
 ```C#
-fsm = StateMachine<States>.Initialize(this);
+fsm = new StateMachine<States, Driver>(this);
 ```
 
 This is where all of the magic in the StateMachine happens: in the background it inspects your MonoBehaviour (`this`) and looks for any methods described by the convention shown below.
 
 You can call this at any time, but generally `Awake()` is a safe choice. 
 
-##### You are now ready to manage state by simply calling `ChangeState()`
+##### Call `Invoke` to update events defined in `Driver`
+```C#
+void Update()
+{
+    fsm.Driver.Update.Invoke();
+}
+
+void OnCollisionEnter(Collision collision)
+{
+    fsm.Driver.OnCollisionEnter.Invoke(collision);
+}
+
+void OnHealthPickup(int health)
+{
+    fsm.Driver.OnHealthPickup.Invoke();
+}
+```
+
+##### You are now ready to manage state. Call `ChangeState()`
 ```C#
 fsm.ChangeState(States.Init);
+
 ```
 
 ##### State callbacks are defined by underscore convention ( `StateName_Method` )
@@ -85,9 +115,22 @@ IEnumerator Play_Enter()
     Debug.Log("Start");	
 }
 
+void Play_OnCollisionEnter(Collision collision)
+{
+	player.health -= health;
+}
+
+void Play_OnHealthPickup(int health)
+{
+	player.health += health;
+}
+
 void Play_Update()
 {
-	Debug.Log("Game Playing");
+	if(player.health <= 0)
+	{
+		fsm.ChangeState(States.Lose);
+	}
 }
 
 void Play_Exit()
@@ -99,9 +142,6 @@ Currently supported methods are:
 
 - `Enter`
 - `Exit`
-- `FixedUpdate`
-- `Update`
-- `LateUpdate`
 - `Finally`
 
 It should be easy enough to extend the source to include other Unity Methods such as OnTriggerEnter, OnMouseDown etc
