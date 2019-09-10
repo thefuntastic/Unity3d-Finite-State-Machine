@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019 Made With Monster Love (Pty) Ltd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,33 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-using System.Collections;
-
 namespace MonsterLove.StateMachine
 {
-	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
+	public class StateMachineRunnerDriver
 	{
-		public TState state;
-		public TDriver driver;
-		
-		public bool hasEnterRoutine;
-		public Action EnterCall = StateMachineRunner.DoNothing;
-		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
-
-		public bool hasExitRoutine;
-		public Action ExitCall = StateMachineRunner.DoNothing;
-		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
-
-		public Action Finally = StateMachineRunner.DoNothing;
-
-		private StateMachine<TState, TDriver> fsm;
-
-		public StateMapping(StateMachine<TState, TDriver> fsm, TState state)
-		{
-			this.fsm = fsm;
-			this.state = state;
-			driver = new TDriver();
-		}
+		public StateEvent FixedUpdate;
+		public StateEvent Update;
+		public StateEvent LateUpdate;
 	}
 }

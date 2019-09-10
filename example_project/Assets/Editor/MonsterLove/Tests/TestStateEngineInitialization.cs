@@ -57,7 +57,7 @@ public class TestStateEngineInitialization
 	[Test]
 	public void TestStatePropBeforeChange()
 	{
-		var fsm = new StateMachine<TestStates, StateMachineDriverUnity>(behaviour);
+		var fsm = new StateMachine<TestStates, StateDriverUnity>(behaviour);
 		
 		Assert.Throws<NullReferenceException>(() =>
 		{
@@ -72,7 +72,7 @@ public class TestStateEngineInitialization
 	[Test]
 	public void TestLastStatePropBeforeChange()
 	{
-		var fsm = new StateMachine<TestStates, StateMachineDriverUnity>(behaviour);
+		var fsm = new StateMachine<TestStates, StateDriverUnity>(behaviour);
 		
 		Assert.Throws<NullReferenceException>(() =>
 		{

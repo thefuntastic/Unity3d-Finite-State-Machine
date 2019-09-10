@@ -18,7 +18,7 @@ namespace Tests
 
 		private GameObject go;
 		private StateClass behaviour;
-		private StateMachine<States, StateMachineDriverUnity> fsm;
+		private StateMachine<States, StateDriverUnity> fsm;
 
 		[SetUp]
 		public void Init()
@@ -26,7 +26,7 @@ namespace Tests
 			go = new GameObject();
 			behaviour = go.AddComponent<StateClass>();
 
-			fsm = new StateMachine<States, StateMachineDriverUnity>(behaviour);
+			fsm = new StateMachine<States, StateDriverUnity>(behaviour);
 			behaviour.fsm = fsm;
 		}
 
@@ -60,7 +60,7 @@ namespace Tests
 
 		private class StateClass : MonoBehaviour
 		{
-			public StateMachine<States, StateMachineDriverUnity> fsm;
+			public StateMachine<States, StateDriverUnity> fsm;
 
 			public int oneEnter;
 			public int oneUpdate;

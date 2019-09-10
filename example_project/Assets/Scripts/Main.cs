@@ -19,14 +19,14 @@ public class Main : MonoBehaviour
 
 	private float startHealth;
 
-	private StateMachine<States, StateMachineDriverUnity> fsm;
+	private StateMachine<States, StateDriverUnity> fsm;
 
 	private void Awake()
 	{
 		startHealth = health;
 
 		//Initialize State Machine Engine		
-		fsm = new StateMachine<States, StateMachineDriverUnity>(this);
+		fsm = new StateMachine<States, StateDriverUnity>(this);
 		fsm.ChangeState(States.Init);
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Made With Monster Love (Pty) Ltd
+ * Copyright (c) 2019 Made With Monster Love (Pty) Ltd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to 
@@ -29,7 +29,7 @@ namespace MonsterLove.StateMachine
 {
 	public class StateMachineRunner : MonoBehaviour
 	{
-		private List<IStateMachine<StateMachineDriverDefault>> stateMachineList = new List<IStateMachine<StateMachineDriverDefault>>();
+		private List<IStateMachine<StateMachineRunnerDriver>> stateMachineList = new List<IStateMachine<StateMachineRunnerDriver>>();
 
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2016 Made With Monster Love (Pty) Ltd
+ * Copyright (c) 2019 Made With Monster Love (Pty) Ltd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to 
@@ -45,7 +45,7 @@ namespace MonsterLove.StateMachine
 		bool IsInTransition { get; }
 	}
 
-	public class StateMachine<TState> : StateMachine<TState, StateMachineDriverDefault> where TState : struct, IConvertible, IComparable
+	public class StateMachine<TState> : StateMachine<TState, StateMachineRunnerDriver> where TState : struct, IConvertible, IComparable
 	{
 		public StateMachine(MonoBehaviour component) : base(component)
 		{
