@@ -22,7 +22,7 @@
 
 namespace MonsterLove.StateMachine
 {
-	public class StateMachineRunnerDriver
+	public class StateDriverRunner
 	{
 		public StateEvent FixedUpdate;
 		public StateEvent Update;

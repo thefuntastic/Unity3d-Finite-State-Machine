@@ -44,7 +44,7 @@ namespace MonsterLove.StateMachine
 		bool IsInTransition { get; }
 	}
 
-	public class StateMachine<TState> : StateMachine<TState, StateMachineRunnerDriver> where TState : struct, IConvertible, IComparable
+	public class StateMachine<TState> : StateMachine<TState, StateDriverRunner> where TState : struct, IConvertible, IComparable
 	{
 		public StateMachine(MonoBehaviour component) : base(component)
 		{

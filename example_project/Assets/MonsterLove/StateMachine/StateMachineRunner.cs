@@ -29,7 +29,7 @@ namespace MonsterLove.StateMachine
 {
 	public class StateMachineRunner : MonoBehaviour
 	{
-		private List<IStateMachine<StateMachineRunnerDriver>> stateMachineList = new List<IStateMachine<StateMachineRunnerDriver>>();
+		private List<IStateMachine<StateDriverRunner>> stateMachineList = new List<IStateMachine<StateDriverRunner>>();
 
 		/// <summary>
 		/// Creates a stateMachine token object which is used to managed to the state of a monobehaviour. 
