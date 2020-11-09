@@ -35,7 +35,7 @@ public class MyManagedComponent : MonoBehaviour
 ```C#
 public enum States
 {
-	Init, 
+    Init, 
     Play, 
     Win, 
     Lose
@@ -67,32 +67,32 @@ fsm.ChangeState(States.Init);
 ```C#
 void Init_Enter()
 {
-	Debug.Log("We are now ready");
+    Debug.Log("We are now ready");
 }
 
 //Coroutines are supported, simply return IEnumerator
 IEnumerator Play_Enter()
 {
-	Debug.Log("Game Starting in 3");
-	yield return new WaitForSeconds(1);
+    Debug.Log("Game Starting in 3");
+    yield return new WaitForSeconds(1);
     
     Debug.Log("Game Starting in 2");
-	yield return new WaitForSeconds(1);
+    yield return new WaitForSeconds(1);
     
     Debug.Log("Game Starting in 1");
-	yield return new WaitForSeconds(1);
+    yield return new WaitForSeconds(1);
     
-    Debug.Log("Start");	
+    Debug.Log("Start");
 }
 
 void Play_Update()
 {
-	Debug.Log("Game Playing");
+    Debug.Log("Game Playing");
 }
 
 void Play_Exit()
 {
-	Debug.Log("Game Over");
+    Debug.Log("Game Over");
 }
 ```
 Currently supported methods are:
