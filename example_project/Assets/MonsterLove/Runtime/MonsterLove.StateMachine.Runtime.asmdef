@@ -1,8 +1,6 @@
 {
-    "name": "StateMachine.Samples",
-    "references": [
-        "GUID:39f9fc2c98cf6654498562b4bdd17a1e"
-    ],
+    "name": "MonsterLove.StateMachine.Runtime",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
