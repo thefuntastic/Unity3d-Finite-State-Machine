@@ -97,45 +97,45 @@ fsm.ChangeState(States.Init);
 ```C#
 void Init_Enter()
 {
-	Debug.Log("We are now ready");
+    Debug.Log("We are now ready");
 }
 
 //Coroutines are supported, simply return IEnumerator
 IEnumerator Play_Enter()
 {
-	Debug.Log("Game Starting in 3");
-	yield return new WaitForSeconds(1);
+    Debug.Log("Game Starting in 3");
+    yield return new WaitForSeconds(1);
     
     Debug.Log("Game Starting in 2");
-	yield return new WaitForSeconds(1);
+    yield return new WaitForSeconds(1);
     
     Debug.Log("Game Starting in 1");
-	yield return new WaitForSeconds(1);
+    yield return new WaitForSeconds(1);
     
-    Debug.Log("Start");	
+    Debug.Log("Start");    
 }
 
 void Play_OnCollisionEnter(Collision collision)
 {
-	player.health -= health;
+    player.health -= health;
 }
 
 void Play_OnHealthPickup(int health)
 {
-	player.health += health;
+    player.health += health;
 }
 
 void Play_Update()
 {
-	if(player.health <= 0)
-	{
-		fsm.ChangeState(States.Lose);
-	}
+    if(player.health <= 0)
+    {
+        fsm.ChangeState(States.Lose);
+    }
 }
 
 void Play_Exit()
 {
-	Debug.Log("Game Over");
+    Debug.Log("Game Over");
 }
 ```
 Currently supported methods are:
