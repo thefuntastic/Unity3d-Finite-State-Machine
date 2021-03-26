@@ -27,11 +27,12 @@ using UnityEngine;
 
 namespace MonsterLove.StateMachine
 {
-	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
+	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable
+		where TDriver : class, new()
 	{
 		public TState state;
 		public TDriver driver;
-		
+
 		public bool hasEnterRoutine;
 		public Action EnterCall = StateMachineRunner.DoNothing;
 		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
@@ -41,8 +42,9 @@ namespace MonsterLove.StateMachine
 		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
 
 		public Action Finally = StateMachineRunner.DoNothing;
-		
+
 		private Func<TState> stateProviderCallback;
+		private Func<TState, int> enumConverter;
 		private StateMachine<TState, TDriver> fsm;
 
 		public StateMapping(StateMachine<TState, TDriver> fsm, TState state, Func<TState> stateProvider)
@@ -51,6 +53,10 @@ namespace MonsterLove.StateMachine
 			this.state = state;
 			stateProviderCallback = stateProvider;
 			driver = new TDriver();
+			
+			Func<int, int> identity = Identity;
+			enumConverter =
+				Delegate.CreateDelegate(typeof(Func<TState, int>), identity.Method) as Func<TState, int>;
 		}
 
 		public bool IsStateActive()
@@ -62,11 +68,40 @@ namespace MonsterLove.StateMachine
 			}
 
 			//state == stateProviderCallback() //this is illegal because even though they are the same type the compiler doesn't know they are enums -__- 
-			
+
+			// Very slow, also allocates tons of garbage 
+			//bool isActive = state.Equals(stateProviderCallback());
+
+			// Allocates gc, slow too
+			//int val1 = state.ToInt32(CultureInfo.InvariantCulture);
+			//int val2 = stateProviderCallback().ToInt32(CultureInfo.InvariantCulture);
+			//bool isActive = (val1 == val2);
+
 			//EqualityComparer is how the dictionary class uses enums as keys - doesn't allocate garbage, but is slow
 			bool isActive = EqualityComparer<TState>.Default.Equals(state, stateProviderCallback());
+
+			//Equivalent to EqualityComparer<TState>
+			// Func<TState, int> enumConverter = EqualityComparer<TState>.Default.GetHashCode;
+			// int val1 = enumConverter(state);
+			// int val2 = enumConverter(stateProviderCallback());
+			// bool isActive = (val1 == val2);
+
+			//Doesn't work
+			// int val1 = BitConvert.Enum32ToInt(state);
+			// int val2 = BitConvert.Enum32ToInt(stateProviderCallback());
+			// bool isActive = (val1 == val2);
 			
+			//3x speedup vs Equality comparer
+			// int val1 = enumConverter(state);
+			// int val2 = enumConverter(stateProviderCallback());
+			// bool isActive = (val1 == val2);
+
 			return isActive;
+		}
+
+		public static int Identity(int x)
+		{
+			return x;
 		}
 	}
 }
