@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/MonsterLove/Samples/StateMachine_Advanced.unity
+    guid: fa60728e35284674e88aa2ae6df84576
   m_configObjects: {}
