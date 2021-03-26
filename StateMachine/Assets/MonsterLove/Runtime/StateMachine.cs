@@ -107,8 +107,7 @@ namespace MonsterLove.StateMachine
 			foreach (var kvp in stateLookup)
 			{
 				var mapping = kvp.Value;
-				mapping.driver = CreateDriver(null, eventFields);
-				
+				mapping.driver = CreateDriver(mapping.IsStateActive, eventFields);
 			}
 
 			//Collect methods in target component
@@ -130,7 +129,7 @@ namespace MonsterLove.StateMachine
 				{
 					//Bind methods defined in TDriver
 					FieldInfo eventField = eventFieldsLookup[evtName];
-					BindEvents(mapping, component, methods[i], eventField); //Todo, won't be necessary any more
+					BindEvents(mapping, component, methods[i], eventField);
 				}
 				else
 				{
@@ -142,13 +141,13 @@ namespace MonsterLove.StateMachine
 			//Create nil state mapping
 			currentState = null; 
 			
-			//This is a head hurter: 
-			//rootDriver.Foo<T> -> dispatcher -> __Mapping<States.One>.Driver.Foo.Invoke
-			//						  			 \_Mapping<States.Two>.Driver.Foo.Invoke
-			//									 \_Mapping<States.Three>.Driver.Foo.Invoke
+			//rootDriver.Foo<T> -> __Mapping<States.One>.Driver.Foo.Invoke
+			//                     \_Mapping<States.Two>.Driver.Foo.Invoke
+			//                     \_Mapping<States.Three>.Driver.Foo.Invoke
 			// 
-			// basically we create and bind a dispatcher to our permanent root driver. This then routes events to each state mapping
-			// having a fixed permanent driver means client code always has a valid reference
+			// Bind permanent root driver to all our destination drivers in each state mapping. 
+			// having a fixed permanent driver means client code always has a valid reference. 
+			// The validation callback injected into each stateMapping.driver throttles which lister will actually fire
 			rootDriver = CreateDriver(IsDispatchAllowed, eventFields);
 			for (int i = 0; i < eventFields.Count; i++)
 			{
@@ -198,7 +197,7 @@ namespace MonsterLove.StateMachine
 			var stateLookup = new Dictionary<object, StateMapping<TState, TDriver>>();
 			for (int i = 0; i < values.Length; i++)
 			{
-				var mapping = new StateMapping<TState, TDriver>(fsm, (TState) values.GetValue(i));
+				var mapping = new StateMapping<TState, TDriver>(fsm, (TState) values.GetValue(i), fsm.GetState);
 				stateLookup.Add(mapping.state, mapping);
 			}
 
@@ -231,34 +230,20 @@ namespace MonsterLove.StateMachine
 			var genericTypes = driverEvtDef.FieldType.GetGenericArguments();
 			var actionType = GetActionType(genericTypes);
 			
-			var dispatcherType = GetDispatcherType(genericTypes);
-			var constructorInfo = dispatcherType.GetConstructor(new Type[]{}); // StateDispatcher()
-			var stateProviderInfo = dispatcherType.GetField("stateProvider", bindingFlags); 
-			var dispatcherInvokeInfo = dispatcherType.GetMethod("Invoke"); //StateDispatcher.Invoke()
-			var listenerLookupInfo = dispatcherType.GetField("listenerLookup", bindingFlags);
-			var listenerLookupAddMethodInfo = listenerLookupInfo.FieldType.GetMethod("Add"); //Dictionary<TState, Action<TN>>.Add
 
-			var eventInvokeInfo = driverEvtDef.FieldType.GetMethod("Invoke"); //StateEvent.Invoke();
+			var eventInvokeInfo = driverEvtDef.FieldType.GetMethod("Invoke"); //Driver.Foo.Invoke();
+			var addListenerInfo = driverEvtDef.FieldType.GetMethod("AddListener"); //Driver.Foo.AddListener
 
-			var dispatcher = constructorInfo.Invoke(new object[] { }); // dispatcher = new StateDispatcher()
-			
-			stateProviderInfo.SetValue(dispatcher, stateProvider); // dispatcher.stateProvider = (Func<TState>) stateProvider
+			var broadcasterStateEvent = driverEvtDef.GetValue(broadcaster); //var evt = rootDriver.Foo;
 			
 			foreach(var kvp in stateLookup)
 			{
 				var stateMapping = kvp.Value;
-
-				var listenerLookup = listenerLookupInfo.GetValue(dispatcher); // var listenerLookup = dispatcher.listenerLookup
 				var stateEvent = driverEvtDef.GetValue(stateMapping.driver); //var stateEvent = stateMapping.Driver.Foo;
 				var listener = Delegate.CreateDelegate(actionType, stateEvent, eventInvokeInfo); // (delegate) stateMapping.Driver.Foo.Invoke
 				
-				listenerLookupAddMethodInfo.Invoke(listenerLookup, new[] {kvp.Key, listener}); // listenerLookup.Add(state, stateMapping.Driver.Foo.Invoke)
+				addListenerInfo.Invoke(broadcasterStateEvent, new object[] {listener}); //rootDriver.Foo.AddListener(stateMapping.Driver.Foo.Invoke)
 			}
-			
-			var addListenerInfo = driverEvtDef.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
-			var broadcasterStateEvent = driverEvtDef.GetValue(broadcaster); //var evt = driver.Foo;
-			Delegate del = Delegate.CreateDelegate(actionType, dispatcher, dispatcherInvokeInfo); // (delegate) dispatcher.Invoke
-			addListenerInfo.Invoke(broadcasterStateEvent, new object[] {del}); //driver.Foo.AddListener(dispatcher.Invoke)
 		}
 
 		static bool ParseName(MethodInfo methodInfo, out TState state, out string eventName)
@@ -364,30 +349,6 @@ namespace MonsterLove.StateMachine
 			}
 
 			return ret;
-		}
-
-		static Type GetDispatcherType(Type[] genericArgs)
-		{
-			//convert <T1,T2...TN> to <TState,T1,T2...TN>
-			Type[] concatenatedArgs = new Type[genericArgs.Length + 1];
-			
-			concatenatedArgs[0] = typeof(TState);
-			for (int i = 0; i < genericArgs.Length; i++)
-			{
-				concatenatedArgs[i + 1] = genericArgs[i];
-			}
-			
-			switch (concatenatedArgs.Length)
-			{
-				case 1:
-					return typeof(StateDispatcher<>).MakeGenericType(concatenatedArgs);
-				case 2:
-					return typeof(StateDispatcher<,>).MakeGenericType(concatenatedArgs);
-				case 3:
-					return typeof(StateDispatcher<,,>).MakeGenericType(concatenatedArgs);
-				default:
-					throw new ArgumentOutOfRangeException(string.Format("Cannot create StateDispatcher Type with {0} type arguments", genericArgs.Length));
-			}
 		}
 
 		static Type GetActionType(Type[] genericArgs)

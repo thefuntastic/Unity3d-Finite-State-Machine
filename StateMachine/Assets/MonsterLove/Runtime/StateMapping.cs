@@ -22,6 +22,8 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace MonsterLove.StateMachine
 {
@@ -39,14 +41,32 @@ namespace MonsterLove.StateMachine
 		public Func<IEnumerator> ExitRoutine = StateMachineRunner.DoNothingCoroutine;
 
 		public Action Finally = StateMachineRunner.DoNothing;
-
+		
+		private Func<TState> stateProviderCallback;
 		private StateMachine<TState, TDriver> fsm;
 
-		public StateMapping(StateMachine<TState, TDriver> fsm, TState state)
+		public StateMapping(StateMachine<TState, TDriver> fsm, TState state, Func<TState> stateProvider)
 		{
 			this.fsm = fsm;
 			this.state = state;
+			stateProviderCallback = stateProvider;
 			driver = new TDriver();
+		}
+
+		public bool IsStateActive()
+		{
+			if (stateProviderCallback == null)
+			{
+				Debug.LogError("No state provider specified, this state can never execute");
+				return false;
+			}
+
+			//state == stateProviderCallback() //this is illegal because even though they are the same type the compiler doesn't know they are enums -__- 
+			
+			//EqualityComparer is how the dictionary class uses enums as keys - doesn't allocate garbage, but is slow
+			bool isActive = EqualityComparer<TState>.Default.Equals(state, stateProviderCallback());
+			
+			return isActive;
 		}
 	}
 }
