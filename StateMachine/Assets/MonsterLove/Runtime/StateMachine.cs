@@ -55,6 +55,7 @@ namespace MonsterLove.StateMachine
 	{
 		public event Action<TState> Changed;
 
+		public bool reenter = false;
 		private MonoBehaviour component;
 
 		private StateMapping<TState, TDriver> lastState;
@@ -73,7 +74,7 @@ namespace MonsterLove.StateMachine
 		private static BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 #region Initialization
-
+		
 		public StateMachine(MonoBehaviour component)
 		{
 			this.component = component;
@@ -139,8 +140,8 @@ namespace MonsterLove.StateMachine
 			}
 
 			//Create nil state mapping
-			currentState = null; 
-			
+			currentState = null;
+
 			//rootDriver.Foo<T> -> __Mapping<States.One>.Driver.Foo.Invoke
 			//                     \_Mapping<States.Two>.Driver.Foo.Invoke
 			//                     \_Mapping<States.Three>.Driver.Foo.Invoke
@@ -229,14 +230,14 @@ namespace MonsterLove.StateMachine
 		{
 			var genericTypes = driverEvtDef.FieldType.GetGenericArguments();
 			var actionType = GetActionType(genericTypes);
-			
+
 
 			var eventInvokeInfo = driverEvtDef.FieldType.GetMethod("Invoke"); //Driver.Foo.Invoke();
 			var addListenerInfo = driverEvtDef.FieldType.GetMethod("AddListener"); //Driver.Foo.AddListener
 
 			var broadcasterStateEvent = driverEvtDef.GetValue(broadcaster); //var evt = rootDriver.Foo;
-			
-			foreach(var kvp in stateLookup)
+
+			foreach (var kvp in stateLookup)
 			{
 				var stateMapping = kvp.Value;
 				var stateEvent = driverEvtDef.GetValue(stateMapping.driver); //var stateEvent = stateMapping.Driver.Foo;
@@ -266,7 +267,7 @@ namespace MonsterLove.StateMachine
 			}
 
 			string stateName = name.Substring(0, index);
-			eventName = name.Substring(index+1);
+			eventName = name.Substring(index + 1);
 
 			try
 			{
@@ -299,7 +300,7 @@ namespace MonsterLove.StateMachine
 			{
 				throw new ArgumentException(string.Format("State ({0}_{1}) requires a callback of type: {2}, type found: {3}", targetState.state, driverEvtDef.Name, actionType, stateTargetDef));
 			}
-			
+
 			addMethodInfo.Invoke(obj, new object[] {del}); //driver.Foo.AddListener(component.State_Event);
 		}
 
@@ -365,6 +366,7 @@ namespace MonsterLove.StateMachine
 					throw new ArgumentOutOfRangeException(string.Format("Cannot create Action Type with {0} type arguments", genericArgs.Length));
 			}
 		}
+
 #endregion
 
 #region ChangeStates
@@ -388,7 +390,10 @@ namespace MonsterLove.StateMachine
 
 			var nextState = stateLookup[newState];
 
-			if (currentState == nextState) return;
+			if (!reenter && currentState == nextState)
+			{
+				return;
+			}
 
 			//Cancel any queued changes.
 			if (queuedChange != null)
@@ -454,6 +459,8 @@ namespace MonsterLove.StateMachine
 			}
 			else //Same frame transition, no coroutines are present
 			{
+				destinationState = nextState; //Assign here so Exit() has a valid reference
+				
 				if (currentState != null)
 				{
 					currentState.ExitCall();
@@ -461,7 +468,7 @@ namespace MonsterLove.StateMachine
 				}
 
 				lastState = currentState;
-				currentState = nextState;
+				currentState = destinationState;
 				if (currentState != null)
 				{
 					currentState.EnterCall();
@@ -563,6 +570,19 @@ namespace MonsterLove.StateMachine
 			}
 		}
 
+		public TState NextState
+		{
+			get
+			{
+				if (destinationState == null)
+				{
+					return State;
+				}
+
+				return (TState) destinationState.state;
+			}
+		}
+
 		public TState State
 		{
 			get
@@ -571,7 +591,7 @@ namespace MonsterLove.StateMachine
 				{
 					throw new NullReferenceException("State cannot be accessed before ChangeState() has been called at least once");
 				}
-				
+
 				return (TState) currentState.state;
 			}
 		}
@@ -596,14 +616,14 @@ namespace MonsterLove.StateMachine
 		{
 			return State;
 		}
-		
+
 		private bool IsDispatchAllowed()
 		{
 			if (currentState == null)
 			{
 				return false;
 			}
-				
+
 			if (IsInTransition)
 			{
 				return false;
@@ -611,7 +631,6 @@ namespace MonsterLove.StateMachine
 
 			return true;
 		}
-		
 
 #endregion
 
