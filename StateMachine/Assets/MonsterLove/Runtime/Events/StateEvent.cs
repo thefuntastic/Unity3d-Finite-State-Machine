@@ -32,18 +32,18 @@ namespace MonsterLove.StateMachine
     {
         private Func<int> getStateInt;
         private Func<bool> isInvokeAllowed;
-        private Dictionary<int, Action> routingTable;
+        private Action[] routingTable;
 
         public StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity)
         {
             this.isInvokeAllowed = isInvokeAllowed;
             this.getStateInt = stateProvider;
-            routingTable = new Dictionary<int, Action>(capacity);
+            routingTable = new Action[capacity];
         }
         
         internal void AddListener(int stateInt, Action listener)
         {
-           routingTable.Add(stateInt, listener);
+            routingTable[stateInt] = listener;
         }
 
         public void Invoke()
@@ -53,14 +53,11 @@ namespace MonsterLove.StateMachine
                 return;
             }
 
-            Action call = null;
-            if (routingTable.TryGetValue(getStateInt(), out call))
+            Action call = routingTable[getStateInt()];
+            if (call != null)
             {
-                if (call != null)
-                {
-                    call();
-                    return;
-                }
+                call();
+                return;
             }
         }
     }
@@ -69,18 +66,18 @@ namespace MonsterLove.StateMachine
     {
         private Func<int> getStateInt;
         private Func<bool> isInvokeAllowed;
-        private Dictionary<int, Action<T>> routingTable;
+        private Action<T>[] routingTable;
         
         public StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity)
         {
             this.isInvokeAllowed = isInvokeAllowed;
             this.getStateInt = stateProvider;
-            routingTable = new Dictionary<int, Action<T>>(capacity);
+            routingTable = new Action<T>[capacity];
         }
 
         internal void AddListener(int stateInt, Action<T> listener)
         {
-            routingTable.Add(stateInt, listener);
+            routingTable[stateInt] = listener;
         }
 
         public void Invoke(T param)
@@ -90,14 +87,11 @@ namespace MonsterLove.StateMachine
                 return;
             }
 
-            Action<T> call = null;
-            if (routingTable.TryGetValue(getStateInt(), out call))
+            Action<T> call = routingTable[getStateInt()];
+            if (call != null)
             {
-                if (call != null)
-                {
-                    call(param);
-                    return;
-                }
+                call(param);
+                return;
             }
         }
     }
@@ -106,18 +100,18 @@ namespace MonsterLove.StateMachine
     {
         private Func<int> getStateInt;
         private Func<bool> isInvokeAllowed;
-        private Dictionary<int, Action<T1,T2>> routingTable;
+        private Action<T1,T2>[] routingTable;
         
         public StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity)
         {
             this.isInvokeAllowed = isInvokeAllowed;
             this.getStateInt = stateProvider;
-            routingTable = new Dictionary<int, Action<T1, T2>>(capacity);
+            routingTable = new Action<T1, T2>[capacity];
         }
 
         internal void AddListener(int stateInt, Action<T1, T2> listener)
         {
-            routingTable.Add(stateInt, listener);
+            routingTable[stateInt] = listener;
         }
 
         public void Invoke(T1 param1, T2 param2)
@@ -127,14 +121,11 @@ namespace MonsterLove.StateMachine
                 return;
             }
             
-            Action<T1, T2> call = null;
-            if (routingTable.TryGetValue(getStateInt(), out call))
+            Action<T1, T2> call = routingTable[getStateInt()];
+            if (call != null)
             {
-                if (call != null)
-                {
-                    call(param1, param2);
-                    return;
-                }
+                call(param1, param2);
+                return;
             }
         }
     }

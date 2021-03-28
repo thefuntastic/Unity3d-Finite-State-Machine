@@ -254,7 +254,6 @@ namespace MonsterLove.StateMachine
 			
 			//evt.AddListener(State_Method); 
 			var obj = driverEvtDef.GetValue(driver); //driver.Foo
-			//var addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener", new Type[]{typeof(int), actionType}); // driver.Foo.AddListener
 			var addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener", bindingFlags); // driver.Foo.AddListener
 
 			Delegate del = null;
