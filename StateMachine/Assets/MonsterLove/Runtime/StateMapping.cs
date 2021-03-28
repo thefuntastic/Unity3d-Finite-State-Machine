@@ -22,14 +22,16 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace MonsterLove.StateMachine
 {
-	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable where TDriver : class, new()
+	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable
+		where TDriver : class, new()
 	{
 		public TState state;
-		public TDriver driver;
-		
+
 		public bool hasEnterRoutine;
 		public Action EnterCall = StateMachineRunner.DoNothing;
 		public Func<IEnumerator> EnterRoutine = StateMachineRunner.DoNothingCoroutine;
@@ -40,13 +42,14 @@ namespace MonsterLove.StateMachine
 
 		public Action Finally = StateMachineRunner.DoNothing;
 
+		private Func<TState> stateProviderCallback;
 		private StateMachine<TState, TDriver> fsm;
 
-		public StateMapping(StateMachine<TState, TDriver> fsm, TState state)
+		public StateMapping(StateMachine<TState, TDriver> fsm, TState state, Func<TState> stateProvider)
 		{
 			this.fsm = fsm;
 			this.state = state;
-			driver = new TDriver();
+			stateProviderCallback = stateProvider;
 		}
 	}
 }
