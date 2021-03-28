@@ -19,8 +19,6 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,6 +59,7 @@ namespace MonsterLove.StateMachine
 		private StateMapping<TState, TDriver> lastState;
 		private StateMapping<TState, TDriver> currentState;
 		private StateMapping<TState, TDriver> destinationState;
+		private StateMapping<TState, TDriver> queuedState;
 		private TDriver rootDriver;
 
 		private Dictionary<object, StateMapping<TState, TDriver>> stateLookup;
@@ -89,6 +88,12 @@ namespace MonsterLove.StateMachine
 			if (enumValues.Length < 1)
 			{
 				throw new ArgumentException("Enum provided to Initialize must have at least 1 visible definition");
+			}
+
+			var enumBackingType = Enum.GetUnderlyingType(typeof(TState));
+			if(enumBackingType != typeof(int))
+			{
+				throw new ArgumentException("Only enums with an underlying type of int are supported");
 			}
 
 			//Find all items in Driver class
@@ -505,11 +510,14 @@ namespace MonsterLove.StateMachine
 
 		IEnumerator WaitForPreviousTransition(StateMapping<TState, TDriver> nextState)
 		{
+			queuedState = nextState; //Cache this so fsm.NextState is accurate;
+			
 			while (isInTransition)
 			{
 				yield return null;
 			}
 
+			queuedState = null;
 			ChangeState((TState) nextState.state);
 		}
 
@@ -539,6 +547,11 @@ namespace MonsterLove.StateMachine
 		{
 			get
 			{
+				if (queuedState != null) //In safe mode sometimes we need to wait for the destination state to complete, and will be stored in queued state
+				{
+					return (TState) queuedState.state;
+				}
+
 				if (destinationState == null)
 				{
 					return State;
