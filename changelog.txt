@@ -1,8 +1,15 @@
-v4.0 August 2019
+v4.0 April 2021
+	*Added `NextState` property
+	*Added `reenter` flag to allow changes to the same state
+	*Fixed AOT imcompatibility preventing release of v4.0
+	*Added new example showing Driver implementation
+	*Upgraded project to Unity 2019.4.19
+
+v4.0-rc1 August 2019
 	*StateMachine now accepts a Driver class, a powerful convention for user generated state events that ties FSM to the lifecycle of a monobehaviour and offers better performance. 
 	*Modernised unit tests for Unity Test Runner
 	*Compenents deriving from a super class will now also search super classes for state methods
-	*Added LastState property to StateMachine class
+	*Added `LastState` property to StateMachine class
 	*Upgraded project to Unity 2018.3.7
 
 v3.1 March 2016
