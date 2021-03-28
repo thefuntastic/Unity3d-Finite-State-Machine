@@ -1,15 +1,22 @@
 v4.0 April 2021
+	*StateMachine now accepts a Driver class, a powerful convention for data driven state events that provides explicit control of the State Machine lifecycle. 
+	*Added `LastState` property
 	*Added `NextState` property
-	*Added `reenter` flag to allow changes to the same state
+	*Added `reenter` flag to allow transitions back into the same state
 	*Fixed AOT imcompatibility preventing release of v4.0
 	*Added new example showing Driver implementation
+	*Modernised unit tests for Unity Test Runner
+	*Components deriving from a super class will now also search super classes for state methods
 	*Upgraded project to Unity 2019.4.19
 
+	### Upgrade Notes:
+	The layout of the library has changed. To avoid issues delete the existing `MonsterLove` folder containing `StateMachine.cs` and related files, before reimporting the Unity package. The API however remains backwards compatible with prior versions. This means your client code does not need to be upgraded.
+
 v4.0-rc1 August 2019
-	*StateMachine now accepts a Driver class, a powerful convention for user generated state events that ties FSM to the lifecycle of a monobehaviour and offers better performance. 
+	*Created StateMachine Driver concept
+	*Added `LastState` property to StateMachine class
 	*Modernised unit tests for Unity Test Runner
 	*Compenents deriving from a super class will now also search super classes for state methods
-	*Added `LastState` property to StateMachine class
 	*Upgraded project to Unity 2018.3.7
 
 v3.1 March 2016
