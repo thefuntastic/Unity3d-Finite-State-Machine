@@ -52,11 +52,19 @@ namespace Tests
 
 			fsm.ChangeState(States.Two, StateTransition.Safe);
 
+			Assert.Catch(() => { var state = fsm.LastState;});
+			Assert.AreEqual(States.One, fsm.State);
+			Assert.AreEqual(States.Two, fsm.NextState);
+
 			Assert.AreEqual(1, behaviour.oneEnter);
 			Assert.AreEqual(0, behaviour.oneExit);
 			Assert.AreEqual(0, behaviour.twoEnter);
 
 			yield return new WaitForSeconds(duration + duration + 0.2f);
+			
+			Assert.AreEqual(States.One, fsm.LastState);
+			Assert.AreEqual(States.Two, fsm.State);
+			Assert.AreEqual(States.Two, fsm.NextState);
 
 			Assert.AreEqual(1, behaviour.oneEnter);
 			Assert.AreEqual(1, behaviour.oneExit);
@@ -75,6 +83,10 @@ namespace Tests
 			Assert.AreEqual(1, behaviour.threeExit);
 
 			Assert.AreEqual(0, behaviour.twoEnter);
+			
+			Assert.AreEqual(States.Three, fsm.LastState);
+			Assert.AreEqual(States.Two, fsm.State);
+			Assert.AreEqual(States.Two, fsm.NextState);
 
 			yield return new WaitForSeconds(duration / 2f);
 
@@ -89,6 +101,10 @@ namespace Tests
 			Assert.AreEqual(0, behaviour.twoFinally);
 
 			Assert.AreEqual(0, behaviour.fourEnter);
+			
+			Assert.AreEqual(States.Three, fsm.LastState);
+			Assert.AreEqual(States.Two, fsm.State);
+			Assert.AreEqual(States.Four, fsm.NextState);
 
 			yield return new WaitForSeconds(duration / 2f + duration + 0.2f);
 
@@ -100,6 +116,10 @@ namespace Tests
 			Assert.AreEqual(1, behaviour.twoFinally);
 
 			Assert.AreEqual(1, behaviour.fourEnter);
+			
+			Assert.AreEqual(States.Two, fsm.LastState);
+			Assert.AreEqual(States.Four, fsm.State);
+			Assert.AreEqual(States.Four, fsm.NextState);
 		}
 
 		[UnityTest]
@@ -119,6 +139,10 @@ namespace Tests
 			Assert.AreEqual(0, behaviour.threeExit);
 
 			Assert.AreEqual(0, behaviour.fourEnter);
+			
+			Assert.Catch(() => { var state = fsm.LastState;});
+			Assert.AreEqual(States.One, fsm.State);
+			Assert.AreEqual(States.Three, fsm.NextState);
 
 			// 1\__4 //In safe mode, before state is entered, newer state will supersede queued state 
 			fsm.ChangeState(States.Four);
@@ -129,6 +153,10 @@ namespace Tests
 			Assert.AreEqual(0, behaviour.threeExit);
 
 			Assert.AreEqual(0, behaviour.fourEnter);
+			
+			Assert.Catch(() => { var state = fsm.LastState;});
+			Assert.AreEqual(States.One, fsm.State);
+			Assert.AreEqual(States.Four, fsm.NextState);
 
 			yield return new WaitForSeconds(duration / 2f + 0.2f);
 
@@ -138,6 +166,10 @@ namespace Tests
 			Assert.AreEqual(0, behaviour.threeExit);
 
 			Assert.AreEqual(1, behaviour.fourEnter);
+			
+			Assert.AreEqual(States.One, fsm.LastState);
+			Assert.AreEqual(States.Four, fsm.State);
+			Assert.AreEqual(States.Four, fsm.NextState);
 		}
 
 		private class StateClass : MonoBehaviour

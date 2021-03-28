@@ -75,6 +75,8 @@ namespace Tests
 		[Test]
 		public void TestChangeFromEnter()
 		{
+			fsm.ChangeState(States.Two);
+			
 			// -4__3 //Four_Enter contains change to 3
 			fsm.ChangeState(States.Four);
 
@@ -84,6 +86,10 @@ namespace Tests
 			Assert.AreEqual(1, behaviour.fourFinally);
 
 			Assert.AreEqual(1, behaviour.threeEnter);
+			
+			Assert.AreEqual(States.Four, fsm.LastState);
+			Assert.AreEqual(States.Three, fsm.State);
+			Assert.AreEqual(States.Three, fsm.NextState);
 		}
 
 		private class StateClass : MonoBehaviour

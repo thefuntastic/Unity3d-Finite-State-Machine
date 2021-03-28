@@ -39,6 +39,13 @@ namespace Tests
 		public IEnumerator TestChange()
 		{
 			fsm.ChangeState(States.One);
+			
+			Assert.Catch(()=>
+			{
+				var last = fsm.LastState;
+			});
+			Assert.AreEqual(States.One, fsm.State);
+			Assert.AreEqual(States.One, fsm.NextState);
 
 			yield return null;
 
@@ -50,8 +57,11 @@ namespace Tests
 			Assert.AreEqual(1, behaviour.oneFinally);
 			Assert.AreEqual(1, behaviour.twoEnter);
 			Assert.AreEqual(0, behaviour.twoUpdate); //Only changed this frame, hasn't had a chance to update yet
-			
 
+			Assert.AreEqual(States.One, fsm.LastState);
+			Assert.AreEqual(States.Two, fsm.State);
+			Assert.AreEqual(States.Two, fsm.NextState);
+			
 			yield return null;
 
 			Assert.AreEqual(1, behaviour.twoUpdate); //First update runs a frame later
@@ -69,6 +79,11 @@ namespace Tests
 			Assert.AreEqual(1, behaviour.oneFinally);
 			Assert.AreEqual(1, behaviour.twoEnter);
 			Assert.AreEqual(0, behaviour.twoUpdate);
+			
+			Assert.AreEqual(States.One, fsm.LastState);
+			Assert.AreEqual(States.Two, fsm.State);
+			Assert.AreEqual(States.Two, fsm.NextState);
+
 
 			yield return null;
 
