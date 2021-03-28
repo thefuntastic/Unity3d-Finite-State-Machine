@@ -30,27 +30,20 @@ namespace MonsterLove.StateMachine
 {
     public class StateEvent
     {
+        private Func<int> getStateInt;
         private Func<bool> isInvokeAllowed;
-        private List<Action> calls = new List<Action>();
-        
-        public StateEvent(Func<bool> isInvokeAllowed)
+        private Dictionary<int, Action> routingTable;
+
+        public StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity)
         {
             this.isInvokeAllowed = isInvokeAllowed;
+            this.getStateInt = stateProvider;
+            routingTable = new Dictionary<int, Action>(capacity);
         }
-
-        public void AddListener(Action listener)
+        
+        internal void AddListener(int stateInt, Action listener)
         {
-            calls.Add(listener);
-        }
-
-        public void RemoveListener(Action listener)
-        {
-            calls.Remove(listener);
-        }
-
-        public void RemoveAllListeners()
-        {
-            calls.Clear();
+           routingTable.Add(stateInt, listener);
         }
 
         public void Invoke()
@@ -59,14 +52,14 @@ namespace MonsterLove.StateMachine
             {
                 return;
             }
-            
-            //Susceptible to removal during iteration
-            for (int i = 0; i < calls.Count; i++)
+
+            Action call = null;
+            if (routingTable.TryGetValue(getStateInt(), out call))
             {
-                var call = calls[i];
-                if(call != null)
+                if (call != null)
                 {
                     call();
+                    return;
                 }
             }
         }
@@ -74,27 +67,20 @@ namespace MonsterLove.StateMachine
     
     public class StateEvent<T>
     {
+        private Func<int> getStateInt;
         private Func<bool> isInvokeAllowed;
-        private List<Action<T>> calls = new List<Action<T>>();
+        private Dictionary<int, Action<T>> routingTable;
         
-        public StateEvent(Func<bool> isInvokeAllowed)
+        public StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity)
         {
             this.isInvokeAllowed = isInvokeAllowed;
+            this.getStateInt = stateProvider;
+            routingTable = new Dictionary<int, Action<T>>(capacity);
         }
 
-        public void AddListener(Action<T> listener)
+        internal void AddListener(int stateInt, Action<T> listener)
         {
-            calls.Add(listener);
-        }
-
-        public void RemoveListener(Action<T> listener)
-        {
-            calls.Remove(listener);
-        }
-
-        public void RemoveAllListeners()
-        {
-            calls.Clear();
+            routingTable.Add(stateInt, listener);
         }
 
         public void Invoke(T param)
@@ -103,14 +89,14 @@ namespace MonsterLove.StateMachine
             {
                 return;
             }
-            
-            //Susceptible to removal during iteration
-            for (int i = 0; i < calls.Count; i++)
+
+            Action<T> call = null;
+            if (routingTable.TryGetValue(getStateInt(), out call))
             {
-                var call = calls[i];
-                if(call != null)
+                if (call != null)
                 {
                     call(param);
+                    return;
                 }
             }
         }
@@ -118,27 +104,20 @@ namespace MonsterLove.StateMachine
     
     public class StateEvent<T1, T2>
     {
+        private Func<int> getStateInt;
         private Func<bool> isInvokeAllowed;
-        private List<Action<T1, T2>> calls = new List<Action<T1, T2>>();
+        private Dictionary<int, Action<T1,T2>> routingTable;
         
-        public StateEvent(Func<bool> isInvokeAllowed)
+        public StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity)
         {
             this.isInvokeAllowed = isInvokeAllowed;
+            this.getStateInt = stateProvider;
+            routingTable = new Dictionary<int, Action<T1, T2>>(capacity);
         }
 
-        public void AddListener(Action<T1, T2> listener)
+        internal void AddListener(int stateInt, Action<T1, T2> listener)
         {
-            calls.Add(listener);
-        }
-
-        public void RemoveListener(Action<T1, T2> listener)
-        {
-            calls.Remove(listener);
-        }
-
-        public void RemoveAllListeners()
-        {
-            calls.Clear();
+            routingTable.Add(stateInt, listener);
         }
 
         public void Invoke(T1 param1, T2 param2)
@@ -148,13 +127,13 @@ namespace MonsterLove.StateMachine
                 return;
             }
             
-            //Susceptible to removal during iteration
-            for (int i = 0; i < calls.Count; i++)
+            Action<T1, T2> call = null;
+            if (routingTable.TryGetValue(getStateInt(), out call))
             {
-                var call = calls[i];
-                if(call != null)
+                if (call != null)
                 {
                     call(param1, param2);
+                    return;
                 }
             }
         }

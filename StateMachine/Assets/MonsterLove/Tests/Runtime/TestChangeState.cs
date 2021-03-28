@@ -50,6 +50,7 @@ namespace Tests
 			Assert.AreEqual(1, behaviour.oneFinally);
 			Assert.AreEqual(1, behaviour.twoEnter);
 			Assert.AreEqual(0, behaviour.twoUpdate); //Only changed this frame, hasn't had a chance to update yet
+			
 
 			yield return null;
 

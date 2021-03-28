@@ -64,6 +64,7 @@ namespace MonsterLove.StateMachine
 		private TDriver rootDriver;
 
 		private Dictionary<object, StateMapping<TState, TDriver>> stateLookup;
+		private Func<TState, int> enumConverter;
 
 		private bool isInTransition = false;
 		private IEnumerator currentTransition;
@@ -78,6 +79,10 @@ namespace MonsterLove.StateMachine
 		public StateMachine(MonoBehaviour component)
 		{
 			this.component = component;
+			
+			//Compiler shenanigans to get ints from generic enums
+			Func<int, int> identity = Identity;
+			enumConverter = Delegate.CreateDelegate(typeof(Func<TState, int>), identity.Method) as Func<TState, int>;
 
 			//Define States
 			var enumValues = Enum.GetValues(typeof(TState));
@@ -95,21 +100,15 @@ namespace MonsterLove.StateMachine
 			// }
 			List<FieldInfo> eventFields = GetFilteredFields(typeof(TDriver), "MonsterLove.StateMachine.StateEvent");
 			Dictionary<string, FieldInfo> eventFieldsLookup = CreateFieldsLookup(eventFields);
-
-
+			
+			//Instantiate driver
+			// driver = new Driver();
+			// for each StateEvent:
+			//   StateEvent foo = new StateEvent(isAllowed, getStateInt, capacity);
+			rootDriver = CreateDriver(IsDispatchAllowed, GetStateInt, enumValues.Length, eventFields);
+			
 			// Create a state mapping for each state defined in the enum
 			stateLookup = CreateStateLookup(this, enumValues);
-
-			// Ensures every field in the driver is initialised
-			// eg mapping.Driver = new Driver(){
-			//     StateEvent Foo = new StateEvent(mapping.TestInvokable)
-			//     StateEvent Bar = new StateEvent(mapping.TestInvokable)
-			// }
-			foreach (var kvp in stateLookup)
-			{
-				var mapping = kvp.Value;
-				mapping.driver = CreateDriver(mapping.IsStateActive, eventFields);
-			}
 
 			//Collect methods in target component
 			MethodInfo[] methods = component.GetType().GetMethods(bindingFlags);
@@ -129,8 +128,9 @@ namespace MonsterLove.StateMachine
 				if (eventFieldsLookup.ContainsKey(evtName))
 				{
 					//Bind methods defined in TDriver
+					// driver.Foo.AddListener(StateOne_Foo);
 					FieldInfo eventField = eventFieldsLookup[evtName];
-					BindEvents(mapping, component, methods[i], eventField);
+					BindEvents(rootDriver, component, state, enumConverter(state), methods[i], eventField);
 				}
 				else
 				{
@@ -141,27 +141,13 @@ namespace MonsterLove.StateMachine
 
 			//Create nil state mapping
 			currentState = null;
-
-			//rootDriver.Foo<T> -> __Mapping<States.One>.Driver.Foo.Invoke
-			//                     \_Mapping<States.Two>.Driver.Foo.Invoke
-			//                     \_Mapping<States.Three>.Driver.Foo.Invoke
-			// 
-			// Bind permanent root driver to all our destination drivers in each state mapping. 
-			// having a fixed permanent driver means client code always has a valid reference. 
-			// The validation callback injected into each stateMapping.driver throttles which lister will actually fire
-			rootDriver = CreateDriver(IsDispatchAllowed, eventFields);
-			for (int i = 0; i < eventFields.Count; i++)
-			{
-				var driverEventDef = eventFields[i];
-				BindDispatcher(stateLookup, rootDriver, driverEventDef, GetState);
-			}
 		}
 
 		static List<FieldInfo> GetFilteredFields(Type type, string searchTerm)
 		{
 			List<FieldInfo> list = new List<FieldInfo>();
 
-			FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			FieldInfo[] fields = type.GetFields(bindingFlags);
 
 			for (int i = 0; i < fields.Length; i++)
 			{
@@ -205,11 +191,11 @@ namespace MonsterLove.StateMachine
 			return stateLookup;
 		}
 
-		static TDriver CreateDriver(Func<bool> callback, List<FieldInfo> fieldInfos)
+		static TDriver CreateDriver(Func<bool> isInvokeAllowedCallback, Func<int> getStateIntCallback, int capacity, List<FieldInfo> fieldInfos)
 		{
 			if (fieldInfos == null)
 			{
-				throw new ArgumentException(string.Format("Arguments cannot be null. Callback {0} fieldInfos {1}", callback, fieldInfos));
+				throw new ArgumentException(string.Format("Arguments cannot be null. Callback {0} fieldInfos {1}", isInvokeAllowedCallback, fieldInfos));
 			}
 
 			TDriver driver = new TDriver();
@@ -218,33 +204,12 @@ namespace MonsterLove.StateMachine
 			{
 				//driver.Event = new StateEvent(callback)
 				FieldInfo fieldInfo = fieldInfos[i]; //Event
-				ConstructorInfo constructorInfo = fieldInfo.FieldType.GetConstructor(new Type[] {typeof(Func<bool>)}); //StateEvent(Func<Bool> testCallback)
-				object obj = constructorInfo.Invoke(new object[] {callback}); //obj = new StateEvent(callback);
+				ConstructorInfo constructorInfo = fieldInfo.FieldType.GetConstructor(new Type[] {typeof(Func<bool>), typeof(Func<int>), typeof(int)}); //StateEvent(Func<Bool> invokeAllowed, Func<in> getState, int capacity)
+				object obj = constructorInfo.Invoke(new object[] {isInvokeAllowedCallback, getStateIntCallback, capacity}); //obj = new StateEvent(Func<bool> isInvokeAllowed, Func<int> stateProvider, int capacity);
 				fieldInfo.SetValue(driver, obj); //driver.Event = obj;
 			}
 
 			return driver;
-		}
-
-		static void BindDispatcher(Dictionary<object, StateMapping<TState, TDriver>> stateLookup, TDriver broadcaster, FieldInfo driverEvtDef, Func<TState> stateProvider)
-		{
-			var genericTypes = driverEvtDef.FieldType.GetGenericArguments();
-			var actionType = GetActionType(genericTypes);
-
-
-			var eventInvokeInfo = driverEvtDef.FieldType.GetMethod("Invoke"); //Driver.Foo.Invoke();
-			var addListenerInfo = driverEvtDef.FieldType.GetMethod("AddListener"); //Driver.Foo.AddListener
-
-			var broadcasterStateEvent = driverEvtDef.GetValue(broadcaster); //var evt = rootDriver.Foo;
-
-			foreach (var kvp in stateLookup)
-			{
-				var stateMapping = kvp.Value;
-				var stateEvent = driverEvtDef.GetValue(stateMapping.driver); //var stateEvent = stateMapping.Driver.Foo;
-				var listener = Delegate.CreateDelegate(actionType, stateEvent, eventInvokeInfo); // (delegate) stateMapping.Driver.Foo.Invoke
-				
-				addListenerInfo.Invoke(broadcasterStateEvent, new object[] {listener}); //rootDriver.Foo.AddListener(stateMapping.Driver.Foo.Invoke)
-			}
 		}
 
 		static bool ParseName(MethodInfo methodInfo, out TState state, out string eventName)
@@ -282,14 +247,15 @@ namespace MonsterLove.StateMachine
 			return true;
 		}
 
-		static void BindEvents(StateMapping<TState, TDriver> targetState, Component component, MethodInfo stateTargetDef, FieldInfo driverEvtDef)
+		static void BindEvents(TDriver driver, Component component, TState state, int stateInt, MethodInfo stateTargetDef, FieldInfo driverEvtDef)
 		{
-			//evt.AddListener(State_Method); 
-			var obj = driverEvtDef.GetValue(targetState.driver); //driver.Foo
-			var addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener"); // driver.Foo.AddListener
-			
 			var genericTypes = driverEvtDef.FieldType.GetGenericArguments(); //get T1,T2,...TN from StateEvent<T1,T2,...TN>
 			var actionType = GetActionType(genericTypes); //typeof(Action<T1,T2,...TN>)
+			
+			//evt.AddListener(State_Method); 
+			var obj = driverEvtDef.GetValue(driver); //driver.Foo
+			//var addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener", new Type[]{typeof(int), actionType}); // driver.Foo.AddListener
+			var addMethodInfo = driverEvtDef.FieldType.GetMethod("AddListener", bindingFlags); // driver.Foo.AddListener
 
 			Delegate del = null;
 			try
@@ -298,10 +264,10 @@ namespace MonsterLove.StateMachine
 			}
 			catch (ArgumentException)
 			{
-				throw new ArgumentException(string.Format("State ({0}_{1}) requires a callback of type: {2}, type found: {3}", targetState.state, driverEvtDef.Name, actionType, stateTargetDef));
+				throw new ArgumentException(string.Format("State ({0}_{1}) requires a callback of type: {2}, type found: {3}", state, driverEvtDef.Name, actionType, stateTargetDef));
 			}
 
-			addMethodInfo.Invoke(obj, new object[] {del}); //driver.Foo.AddListener(component.State_Event);
+			addMethodInfo.Invoke(obj, new object[] {stateInt, del}); //driver.Foo.AddListener(stateInt, component.State_Event);
 		}
 
 		static void BindEventsInternal(StateMapping<TState, TDriver> targetState, Component component, MethodInfo method, string evtName)
@@ -615,6 +581,17 @@ namespace MonsterLove.StateMachine
 		private TState GetState()
 		{
 			return State;
+		}
+
+		private int GetStateInt()
+		{
+			return enumConverter(State);
+		}
+		
+		//Compiler shenanigans to get ints from generic enums
+		private static int Identity(int x)
+		{
+			return x;
 		}
 
 		private bool IsDispatchAllowed()
