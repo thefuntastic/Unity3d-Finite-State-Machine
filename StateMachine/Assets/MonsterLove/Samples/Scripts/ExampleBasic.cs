@@ -94,7 +94,7 @@ public class ExampleBasic : MonoBehaviour
 
 	void Play_OnGUI()
 	{
-		if(GUILayout.Button("Force Win"))
+		if(GUILayout.Button("Make me win!"))
 		{
 			fsm.ChangeState(States.Win);
 		}
