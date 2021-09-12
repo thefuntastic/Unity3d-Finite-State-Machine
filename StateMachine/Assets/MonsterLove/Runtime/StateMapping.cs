@@ -25,11 +25,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MonsterLove.StateMachine
-{
-	internal class StateMapping<TState, TDriver> where TState : struct, IConvertible, IComparable
-		where TDriver : class, new()
-	{
+namespace MonsterLove.StateMachine {
+	internal class StateMapping<TState, TDriver> where TState : IConvertible, IComparable
+		where TDriver : class, new() {
 		public TState state;
 
 		public bool hasEnterRoutine;
@@ -43,10 +41,9 @@ namespace MonsterLove.StateMachine
 		public Action Finally = StateMachineRunner.DoNothing;
 
 		private Func<TState> stateProviderCallback;
-		private StateMachine<TState, TDriver> fsm;
+		private StateMachine<TDriver> fsm;
 
-		public StateMapping(StateMachine<TState, TDriver> fsm, TState state, Func<TState> stateProvider)
-		{
+		public StateMapping(StateMachine<TDriver> fsm, TState state, Func<TState> stateProvider) {
 			this.fsm = fsm;
 			this.state = state;
 			stateProviderCallback = stateProvider;
