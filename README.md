@@ -33,33 +33,34 @@ public class MyGameplayScript : MonoBehaviour
         Init, 
         Play, 
         Win, 
-        Lose
+        Lose,
+        Total // Last state, needed to inherit other states
     }
     
-    StateMachine<States> fsm;
+    protected StateMachine fsm;
     
-    void Awake(){
-        fsm = new StateMachine<States>(this); //2. The main bit of "magic". 
-
+    protected void Awake(){
+        fsm = new StateMachine(this); //2. The main bit of "magic". 
+        fsm.AddStates<States>();      //2a. Load the states
         fsm.ChangeState(States.Init); //3. Easily trigger state transitions
     }
 
-    void Init_Enter()
+    protected virtual void Init_Enter() // protected and virtual to allow overriding
     {
         Debug.Log("Ready");
     }
 
-    void Play_Enter()
+    protected virtual void Play_Enter()
     {      
         Debug.Log("Spawning Player");    
     }
 
-    void Play_FixedUpdate()
+    protected virtual void Play_FixedUpdate()
     {
         Debug.Log("Doing Physics stuff");
     }
 
-    void Play_Update()
+    protected virtual void Play_Update()
     {
         if(player.health <= 0)
         {
@@ -67,21 +68,47 @@ public class MyGameplayScript : MonoBehaviour
         }
     }
 
-    void Play_Exit()
+    protected virtual void Play_Exit()
     {
         Debug.Log("Despawning Player");    
     }
 
-    void Win_Enter()
+    protected virtual void Win_Enter()
     {
         Debug.Log("Game Over - you won!");
     }
 
-    void Lose_Enter()
+    protected virtual void Lose_Enter()
     {
         Debug.Log("Game Over - you lost!");
     }
 
+}
+
+public class ChildTest : MyGameplayScript{
+public enum ChildStates
+    {
+        First = MyGameplayScript.States.Total,// Extend parent states
+        Die, 
+        Total // Last state, needed to inherit other states
+    }
+    
+    override protected void Awake(){
+        base.Awake(); // Initialize fsm
+        
+        fsm.AddStates<ChildStates>();      //Load the extended states
+        //fsm.ChangeState(ChildStates.Die);    //Optionally change state
+    }
+    
+    protected virtual void Die_Enter()
+    {
+        Debug.Log("You died!");
+    }
+    
+    override protected void Win_Enter()
+    {
+        Debug.Log("The child won!");
+    }
 }
 ```
 
