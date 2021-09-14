@@ -165,10 +165,11 @@ public class Driver
 This is a very simple class. It doesn't have to be called `Driver`; the only constraint is that it must contain `StateEvent` fields. When we pass this to our state machine definition, it will take care of everything needed to set up new State event hooks.
 
 ```C#
-StateMachine<States, Driver> fsm;
+StateMachine<Driver> fsm;
     
 void Awake(){
-    fsm = new StateMachine<States, Driver>(this); 
+    fsm = new StateMachine<Driver>(this); 
+    fsm.AddStates<States>();
 }
 
 void Play_Enter()
